@@ -130,13 +130,42 @@
       </div>
     </div>
 
+    <!-- ===== DELIVERY BASELINES (CAC → FOC → INSTALL) ===== -->
+    <div style="display:flex;align-items:center;gap:10px;margin:30px 0 14px;">
+      <div style="width:3px;height:15px;background:#8DC63F;border-radius:2px;"></div>
+      <div style="font-size:11.5px;font-weight:800;letter-spacing:1.4px;color:#5A6472;text-transform:uppercase;">Delivery Baselines — CAC → FOC → Install</div>
+      <div style="font-size:11px;color:#9AA3AF;font-weight:600;letter-spacing:.3px;">{{ base.trackedLabel }}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:13px;">
+      <div style="background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(20,30,50,.07);padding:15px 16px;border-top:3px solid #8DC63F;">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">FOC Within Baseline</div>
+        <div style="font-size:29px;font-weight:800;line-height:1.05;margin-top:7px;font-variant-numeric:tabular-nums;color:#5B8C1F;">{{ base.hitRate }}</div>
+        <div style="font-size:11px;color:#8A93A0;margin-top:3px;">{{ base.hitRateSub }}</div>
+      </div>
+      <div style="background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(20,30,50,.07);padding:15px 16px;border-top:3px solid #06B6D4;">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">Avg CAC → FOC</div>
+        <div style="font-size:29px;font-weight:800;line-height:1.05;margin-top:7px;font-variant-numeric:tabular-nums;">{{ base.avgFoc }}</div>
+        <div style="font-size:11px;color:#8A93A0;margin-top:3px;">{{ base.avgFocSub }}</div>
+      </div>
+      <div style="background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(20,30,50,.07);padding:15px 16px;border-top:3px solid #0D9488;">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">Avg CAC → Install</div>
+        <div style="font-size:29px;font-weight:800;line-height:1.05;margin-top:7px;font-variant-numeric:tabular-nums;color:#0F766E;">{{ base.avgInstall }}</div>
+        <div style="font-size:11px;color:#8A93A0;margin-top:3px;">{{ base.avgInstallSub }}</div>
+      </div>
+      <div style="background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(20,30,50,.07);padding:15px 16px;border-top:3px solid #EF4444;">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">Past Baseline, No FOC</div>
+        <div style="font-size:29px;font-weight:800;line-height:1.05;margin-top:7px;font-variant-numeric:tabular-nums;color:{{ base.overdueColor }};">{{ base.overdue }}</div>
+        <div style="font-size:11px;color:#8A93A0;margin-top:3px;">{{ base.overdueSub }}</div>
+      </div>
+    </div>
+
     <!-- ===== NET REVENUE TO HYPER ===== -->
     <div style="display:flex;align-items:center;gap:10px;margin:30px 0 14px;">
       <div style="width:3px;height:15px;background:#8DC63F;border-radius:2px;"></div>
-      <div style="font-size:11.5px;font-weight:800;letter-spacing:1.4px;color:#5A6472;text-transform:uppercase;">Revenue to Hyper — Actual MRR</div>
+      <div style="font-size:11.5px;font-weight:800;letter-spacing:1.4px;color:#5A6472;text-transform:uppercase;">Revenue to Hyper — Actual &amp; Forecast MRR</div>
       <div style="font-size:11px;color:#9AA3AF;font-weight:600;letter-spacing:.3px;">Billed To Customer = master agent amount only · Billed To Hyper Networks = MRR + master agent amount</div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:13px;">
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:13px;">
       <div style="background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(20,30,50,.07);padding:15px 16px;border-top:3px solid #06B6D4;">
         <div style="font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">Master Agent Amount</div>
         <div style="font-size:29px;font-weight:800;line-height:1.05;margin-top:7px;font-variant-numeric:tabular-nums;">{{ rev.maAmountVal }}</div>
@@ -156,6 +185,11 @@
         <div style="font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">In Delivery MRR to Hyper</div>
         <div style="font-size:29px;font-weight:800;line-height:1.05;margin-top:7px;font-variant-numeric:tabular-nums;color:#B45309;">{{ rev.netPending }}</div>
         <div style="font-size:11px;color:{{ rev.caveatColor }};margin-top:3px;">{{ rev.netPendingSub }}</div>
+      </div>
+      <div style="background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(20,30,50,.07);padding:15px 16px;border-top:3px solid #8B5CF6;">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">Forecast Total MRR</div>
+        <div style="font-size:29px;font-weight:800;line-height:1.05;margin-top:7px;font-variant-numeric:tabular-nums;color:#6D28D9;">{{ rev.forecastAll }}</div>
+        <div style="font-size:11px;color:#8A93A0;margin-top:3px;">{{ rev.forecastSub }}</div>
       </div>
     </div>
     <div style="background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(20,30,50,.07);padding:16px 18px;margin-top:13px;">
@@ -375,6 +409,7 @@
           </sc-for>
         </select>
         <button onClick="{{ exportOrders }}" style="background:#15171C;color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.3px;">↓ Export CSV</button>
+        <div style="{{ linkNoteStyle }}">{{ linkNote }}</div>
       </div>
     </div>
     <div style="background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(20,30,50,.07);overflow:hidden;">
@@ -391,7 +426,10 @@
             <sc-for list="{{ orderRows }}" as="r" hint-placeholder-count="12">
               <tr style="border-bottom:1px solid #F2F4F6;">
                 <td style="{{ td }}"><span style="{{ r.chipStyle }}">{{ r.statusLabel }}</span></td>
-                <td style="{{ tdNum }}" title="{{ r.deal }}">{{ r.deal }}</td>
+                <td style="{{ tdNum }}" title="{{ r.deal }}">
+                  <a href="{{ r.hsUrl }}" target="_blank" rel="noopener" style="{{ r.hsLinkStyle }}">{{ r.deal }}</a>
+                  <button onClick="{{ r.onNote }}" title="Add a note to this HubSpot deal" style="{{ r.noteBtnStyle }}">{{ r.noteBtnLabel }}</button>
+                </td>
                 <td style="{{ td }}">{{ r.type }}</td>
                 <td style="{{ td }}" title="{{ r.customer }}">{{ r.customer }}</td>
                 <td style="{{ td }}">{{ r.carrier }}</td>
@@ -432,6 +470,7 @@
               <option value="Open">Open / In Delivery</option>
               <option value="Closed">Closed</option>
             </select>
+            <div style="{{ linkNoteStyle }}">{{ linkNote }}</div>
             <button onClick="{{ exportDeals }}" style="background:#15171C;color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.3px;">↓ Export CSV</button>
           </div>
         </div>
@@ -449,7 +488,10 @@
                 <sc-for list="{{ dealRows }}" as="d" hint-placeholder-count="10">
                   <tr style="border-bottom:1px solid #F2F4F6;">
                     <td style="{{ td }}"><span style="{{ d.statusStyle }}">{{ d.statusLabel }}</span></td>
-                    <td style="{{ tdNum }}" title="{{ d.dealNum }}">{{ d.dealNum }}</td>
+                    <td style="{{ tdNum }}" title="{{ d.dealNum }}">
+                      <a href="{{ d.hsUrl }}" target="_blank" rel="noopener" style="{{ d.hsLinkStyle }}">{{ d.dealNum }}</a>
+                      <button onClick="{{ d.onNote }}" title="Add a note to this HubSpot deal" style="{{ d.noteBtnStyle }}">{{ d.noteBtnLabel }}</button>
+                    </td>
                     <td style="{{ td }}"><span style="{{ d.stageStyle }}">{{ d.stage }}</span></td>
                     <td style="{{ td }}" title="{{ d.company }}">{{ d.company }}</td>
                     <td style="{{ td }}">{{ d.carrier }}</td>
@@ -495,6 +537,7 @@
               <span style="font-size:13.5px;font-weight:800;color:#1A1D23;">{{ u.label }}</span>
               <span style="font-size:11px;color:#8A93A0;font-weight:600;">{{ u.sub }}</span>
             </div>
+            <div style="{{ u.doneStyle }}">{{ u.doneLabel }}</div>
             <div style="{{ u.stateStyle }}">{{ u.state }}</div>
             <div style="font-size:11px;color:#9AA3AF;font-weight:600;">{{ u.who }}</div>
             <div style="display:flex;align-items:center;gap:12px;margin-top:2px;">
@@ -506,7 +549,36 @@
         </sc-for>
       </div>
       <div style="font-size:11px;color:#9AA3AF;margin-top:14px;line-height:1.5;">
-        First sheet only. Column headers are matched by name — Status, Type, Billed To, Deal Number, Customer, Address, Master Agent, Carrier, Service, MRR, Term, Contract Sign Date, Submitted to Carrier, Sales Rep, Install Date, Expiration Date, Order Update, Notes. Extra columns are ignored; an upload replaces that book entirely.
+        Tip: click a deal number in either table to open it in HubSpot, or the ✎ button to add a note to that deal. First sheet only. Column headers are matched by name — Status, Type, Billed To, Deal Number, Customer, Address, Master Agent, Carrier, Service, MRR, Term, Contract Sign Date, Submitted to Carrier, Sales Rep, Install Date, Expiration Date, Order Update, Notes, plus the new baseline fields — <strong>Carrier Acceptance Call (CAC)</strong>, <strong>FOC Date</strong> and <strong>International</strong> (Y/N, drives the 180-day baseline). Extra columns are ignored; an upload replaces that book entirely.
+      </div>
+    </div>
+
+    <!-- ===== HUBSPOT NOTE COMPOSER ===== -->
+    <div style="{{ note.panelStyle }}">
+      <div style="display:flex;align-items:flex-start;gap:10px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13.5px;font-weight:800;color:#1A1D23;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ note.title }}</div>
+          <div style="font-size:11px;color:#8A93A0;font-weight:600;margin-top:2px;">{{ note.sub }}</div>
+        </div>
+        <div onClick="{{ note.onClose }}" style="font-size:16px;color:#9AA3AF;cursor:pointer;line-height:1;padding:2px 4px;">×</div>
+      </div>
+      <textarea value="{{ note.text }}" onInput="{{ note.onText }}" placeholder="What changed since your last note?" style="width:100%;margin-top:11px;border:1px solid #D9DEE4;border-radius:7px;padding:9px 11px;font-size:12.5px;font-family:inherit;line-height:1.5;min-height:96px;resize:vertical;"></textarea>
+      <div style="font-size:10.5px;color:#9AA3AF;font-weight:600;margin-top:6px;">{{ note.hint }}</div>
+      <div style="display:flex;align-items:center;gap:11px;margin-top:11px;flex-wrap:wrap;">
+        <button onClick="{{ note.onPush }}" style="{{ note.btnStyle }}">{{ note.btnLabel }}</button>
+        <a href="{{ note.hsUrl }}" target="_blank" rel="noopener" style="font-size:11.5px;font-weight:700;color:#3F6B14;text-decoration:none;border-bottom:1px dotted #B7C0CB;">Open in HubSpot ↗</a>
+      </div>
+      <div style="{{ note.msgStyle }}">{{ note.msg }}</div>
+      <div style="margin-top:13px;padding-top:11px;border-top:1px solid #EDEFF2;">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#8A93A0;">{{ note.historyLabel }}</div>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px;">
+          <sc-for list="{{ note.history }}" as="h" hint-placeholder-count="0">
+            <div style="border-left:2px solid #D3E9B4;padding-left:9px;">
+              <div style="font-size:10px;color:#9AA3AF;font-weight:700;">{{ h.when }}</div>
+              <div style="font-size:11.5px;color:#3F4651;line-height:1.45;">{{ h.text }}</div>
+            </div>
+          </sc-for>
+        </div>
       </div>
     </div>
 
@@ -522,6 +594,7 @@ class Component extends DCLogic {
     dealSearch:'', dealStatusFilter:'', activeInterval:null,
     dealSortCol:'Submitted to Carrier', dealSortDir:-1, dealPage:1,
     yearFilter:'all', billedFilter:'all', gStatus:'all', matchFilter:'all',
+    noteFor:null, noteText:'', notePushing:false, noteMsg:'', noteOk:false, noteLog:{},
     hsRev:null, hsRevMsg:'', hsRevLoading:false,
     roster:{}, rosterOk:null, upBusy:'', upMsg:'', upWho:''
   };
@@ -534,6 +607,7 @@ class Component extends DCLogic {
   componentDidMount(){
     this.loadRevenue();
     this.loadRoster();
+    this.loadNoteLog();
     import('./data/data.js').then(m=>{
       this.setState({ loaded:true, orders:m.ORDERS, dowd:m.DOWD });
     }).catch(e=>console.error('data load failed', e));
@@ -568,8 +642,17 @@ class Component extends DCLogic {
     'update':'Update','last update':'Update','updated':'Update',
     'order update':'Order Update','delivery log':'Order Update','log':'Order Update',
     'notes':'Notes','note':'Notes','comments':'Notes',
-    'contract':'Contract'
+    'contract':'Contract',
+    // delivery baseline fields
+    'cac':'CAC Date','cac date':'CAC Date','carrier acceptance call':'CAC Date','carrier acceptance call date':'CAC Date','carrier acceptance call "cac"':'CAC Date','cac call':'CAC Date','cac call date':'CAC Date',
+    'foc':'FOC Date','foc date':'FOC Date','firm order commitment':'FOC Date','firm order commitment date':'FOC Date','carrier foc':'FOC Date',
+    'international':'International','intl':'International','international?':'International','intl?':'International','domestic/international':'International','region':'International'
   };
+  HUB_PORTAL = '47345387';
+  NOTE_LOG_KEY = 'csd_note_log_v1';
+  // baseline days from the Carrier Acceptance Call to FOC
+  BASE_FOC = 90;
+  BASE_FOC_INTL = 180;
 
   isoDate(v){
     if(v==null||v==='') return null;
@@ -615,7 +698,10 @@ class Component extends DCLogic {
       'Expiration Date':this.isoDate(c['Expiration Date']),
       Update:this.isoDate(c.Update),
       'Order Update':c['Order Update']==null?null:String(c['Order Update']),
-      Notes:c.Notes==null?null:String(c.Notes)
+      Notes:c.Notes==null?null:String(c.Notes),
+      'CAC Date':this.isoDate(c['CAC Date']),
+      'FOC Date':this.isoDate(c['FOC Date']),
+      International:/^(y|yes|true|1|intl|international)/i.test(String(c.International==null?'':c.International).trim())
     };
     if(book==='dowd'){
       out['Deal Number']=c.DealNo==null?null:String(c.DealNo).trim();
@@ -631,10 +717,25 @@ class Component extends DCLogic {
     return out;
   }
 
+  LS_KEY='csd-delivery-books-v1';
+  localBooks(){
+    try{ return JSON.parse(localStorage.getItem(this.LS_KEY)||'{}')||{}; }catch(e){ return {}; }
+  }
+  saveLocalBook(book, rec){
+    const all=this.localBooks();
+    if(rec==null) delete all[book]; else all[book]=rec;
+    try{ localStorage.setItem(this.LS_KEY, JSON.stringify(all)); }catch(e){}
+    return all;
+  }
   loadRoster(){
+    const local=this.localBooks();
+    if(Object.keys(local).length) this.setState({roster:local});
     fetch('/api/roster',{cache:'no-store'})
       .then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status)))
-      .then(j=>{ if(j.error) throw new Error(j.error); this.setState({roster:j.books||{}, rosterOk:true}); })
+      .then(j=>{ if(j.error) throw new Error(j.error);
+        const books=j.books||{};
+        // a shared book wins; a book only this browser has stays visible
+        this.setState({roster:{...local, ...books}, rosterOk:true}); })
       .catch(()=>this.setState({rosterOk:false}));
   }
 
@@ -654,21 +755,28 @@ class Component extends DCLogic {
         rows=raw.map(r=>this.mapRow(book,r)).filter(r=>r.Customer||r['Hyper Deal #']||r['Deal Number']);
         if(!rows.length) throw new Error('no recognisable rows on the first sheet');
       }catch(e){ this.setState({upBusy:'', upMsg:'Could not read that file — '+(e.message||e)}); return; }
+      // show it immediately on this machine, then try to share it with the team
+      const rec={rows, count:rows.length, filename:f.name, uploadedBy:this.state.upWho||'', uploadedAt:new Date().toISOString()};
+      const local=this.saveLocalBook(book, rec);
+      this.setState({roster:{...(this.state.roster||{}), ...local, [book]:rec},
+        upBusy:book, upMsg:f.name+' → '+rows.length+' rows loaded · sharing…'});
       fetch('/api/roster',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({book, rows, filename:f.name, uploadedBy:this.state.upWho||''})})
         .then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status)))
         .then(j=>{ if(j.error) throw new Error(j.error);
           this.setState({upBusy:'', upMsg:f.name+' → '+rows.length+' rows saved for everyone'}); this.loadRoster(); })
-        .catch(e=>this.setState({upBusy:'', upMsg:'Save failed — '+(e.message||e)}));
+        .catch(e=>this.setState({upBusy:'', upMsg:f.name+' → '+rows.length+' rows loaded on this computer only (shared storage unreachable: '+(e.message||e)+')'}));
     };
     rdr.readAsArrayBuffer(f);
   }
 
   clearUpload(book){
-    this.setState({upBusy:book, upMsg:'Reverting…'});
+    const local=this.saveLocalBook(book, null);
+    const roster={...(this.state.roster||{})}; delete roster[book];
+    this.setState({upBusy:book, upMsg:'Reverting…', roster:{...roster, ...local}});
     fetch('/api/roster',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({book, rows:null})})
       .then(()=>{ this.setState({upBusy:'', upMsg:'Reverted to the built-in data'}); this.loadRoster(); })
-      .catch(e=>this.setState({upBusy:'', upMsg:'Failed — '+(e.message||e)}));
+      .catch(()=>this.setState({upBusy:'', upMsg:'Reverted on this computer (shared storage unreachable)'}));
   }
 
   parseDate(s){ if(!s) return null; const d=new Date(s+'T00:00:00'); return isNaN(d.getTime())?null:d; }
@@ -748,6 +856,43 @@ class Component extends DCLogic {
   // Both are the same number with different zero-padding, so compare digits only.
   dealKey(v){ const d=String(v==null?'':v).replace(/\D/g,'').replace(/^0+/,''); return d||null; }
 
+  // ---- HubSpot notes: each push sends only what's in the box, so a working
+  // session adds one timeline entry per update instead of re-sending old text ----
+  loadNoteLog(){
+    try{ this.setState({noteLog:JSON.parse(localStorage.getItem(this.NOTE_LOG_KEY)||'{}')||{}}); }catch(e){}
+  }
+  openNote(rec){
+    this.setState({noteFor:rec, noteText:'', noteMsg:'', noteOk:false});
+  }
+  closeNote(){ this.setState({noteFor:null, noteText:'', noteMsg:'', noteOk:false}); }
+  pushRowNote(){
+    const r=this.state.noteFor; if(!r) return;
+    const text=(this.state.noteText||'').trim();
+    if(!text){ this.setState({noteMsg:'Type the update first — only new text gets pushed.', noteOk:false}); return; }
+    const who=(this.state.upWho||'').trim();
+    const body='<p><b>Delivery update</b>'+(who?' — '+who:'')+' · '+new Date().toLocaleString()+'</p><p>'+
+      text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</p>';
+    this.setState({notePushing:true, noteMsg:'', noteOk:false});
+    fetch('/api/hubspot-note',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({dealId:String(r.hsId), body, projectName:r.name||''})})
+      .then(res=>res.text().then(t=>{
+        let d=null; try{ d=JSON.parse(t); }catch(e){}
+        if(!d) return {ok:false, msg:'Live push only works on the deployed site — not in preview.'};
+        if(res.ok&&d.ok) return {ok:true, msg:'Added to the deal in HubSpot ✓'};
+        return {ok:false, msg:d.error||'Push failed'};
+      }))
+      .then(({ok,msg})=>{
+        if(ok){
+          const log={...(this.state.noteLog||{})};
+          log[r.hsId]=[...(log[r.hsId]||[]), {at:new Date().toISOString(), by:who, text}];
+          try{ localStorage.setItem(this.NOTE_LOG_KEY, JSON.stringify(log)); }catch(e){}
+          this.setState({noteLog:log, noteText:''});
+        }
+        this.setState({notePushing:false, noteMsg:msg, noteOk:ok});
+      })
+      .catch(()=>this.setState({notePushing:false, noteOk:false, noteMsg:"Couldn't reach HubSpot — check the deployed site is online."}));
+  }
+
   loadRevenue(){
     if(this.state.hsRevLoading) return;
     this.setState({hsRevLoading:true, hsRevMsg:'Pulling deal revenue from HubSpot…'});
@@ -797,6 +942,12 @@ class Component extends DCLogic {
         who: rec&&rec.rows&&rec.rows.length
           ? ('Uploaded '+fmtWhen(rec.uploadedAt)+(rec.uploadedBy?' by '+rec.uploadedBy:''))
           : '',
+        doneLabel: busy ? 'Uploading…' : (rec&&rec.rows&&rec.rows.length ? '✓ Upload complete — '+rec.rows.length+' rows in use' : ''),
+        doneStyle: busy
+          ? {display:'inline-flex',alignSelf:'flex-start',alignItems:'center',gap:'6px',background:'#FFF7ED',color:'#B45309',border:'1px solid #FED7AA',borderRadius:'999px',padding:'4px 11px',fontSize:'11.5px',fontWeight:'800',letterSpacing:'.3px'}
+          : (rec&&rec.rows&&rec.rows.length
+              ? {display:'inline-flex',alignSelf:'flex-start',alignItems:'center',gap:'6px',background:'#F1F9E8',color:'#3F6B14',border:'1px solid #D3E9B4',borderRadius:'999px',padding:'4px 11px',fontSize:'11.5px',fontWeight:'800',letterSpacing:'.3px'}
+              : {display:'none'}),
         btnLabel: busy ? 'Working…' : (rec&&rec.rows&&rec.rows.length ? 'Replace .xlsx' : 'Upload .xlsx'),
         btnStyle:{display:'inline-flex',alignItems:'center',gap:'6px',background:'#15171C',color:'#fff',borderRadius:'6px',padding:'7px 13px',fontSize:'12px',fontWeight:'700',cursor:busy?'default':'pointer',opacity:busy?.6:1},
         onPick:(e)=>this.onPickFile(b.key,e),
@@ -808,7 +959,7 @@ class Component extends DCLogic {
       };
     });
     const uploadNote = s.rosterOk===false
-      ? 'Shared storage unavailable on this deploy — uploads save only once the site is running from GitHub.'
+      ? 'Shared storage unreachable — uploads still load the dashboard on this computer, but the team won\u2019t see them until the site runs from GitHub.'
       : 'Uploads replace that book for everyone who opens this dashboard.';
     const uploadNoteStyle = s.rosterOk===false
       ? {fontSize:'11.5px',color:'#B45309',fontWeight:'600'}
@@ -898,6 +1049,38 @@ class Component extends DCLogic {
       totalMRC:this.fmtMRC(totalMRC), installedMRC:this.fmtMRC(installedMRC)
     };
 
+    // ---- delivery baselines: CAC → FOC (90d, 180d international) → install ----
+    const bookAll=[...orders,...dowd].filter(o=>o.Status!=='Cancelled');
+    const baseDays=o=>o.International?this.BASE_FOC_INTL:this.BASE_FOC;
+    const dd=(a,b)=>{ const x=this.parseDate(a), y=this.parseDate(b); return (x&&y)?Math.round((y-x)/86400000):null; };
+    const withCac=bookAll.filter(o=>this.parseDate(o['CAC Date']));
+    const cacToFoc=withCac.map(o=>({o, d:dd(o['CAC Date'],o['FOC Date'])})).filter(r=>r.d!=null);
+    const onTime=cacToFoc.filter(r=>r.d<=baseDays(r.o));
+    const cacToInstall=withCac.map(o=>({o, d:dd(o['CAC Date'],o['Install Date'])})).filter(r=>r.d!=null);
+    const overdue=withCac.filter(o=>{
+      if(o['FOC Date']||o.Status==='Closed') return false;
+      const age=dd(o['CAC Date'], new Date().toISOString().slice(0,10));
+      return age!=null && age>baseDays(o);
+    });
+    const avg=list=>list.length?Math.round(list.reduce((a,r)=>a+r.d,0)/list.length):null;
+    const hasBase=withCac.length>0;
+    const noData='Add CAC / FOC columns to the sheet';
+    const base={
+      hasBase,
+      trackedLabel: hasBase
+        ? withCac.length+' orders with a CAC date · baseline '+this.BASE_FOC+'d domestic / '+this.BASE_FOC_INTL+'d international'
+        : 'No CAC dates in the current books yet',
+      hitRate: cacToFoc.length ? Math.round(onTime.length/cacToFoc.length*100)+'%' : '—',
+      hitRateSub: cacToFoc.length ? onTime.length+' of '+cacToFoc.length+' FOCs within baseline' : noData,
+      avgFoc: avg(cacToFoc)==null?'—':avg(cacToFoc)+'d',
+      avgFocSub: cacToFoc.length ? 'CAC → FOC, '+cacToFoc.length+' orders' : noData,
+      avgInstall: avg(cacToInstall)==null?'—':avg(cacToInstall)+'d',
+      avgInstallSub: cacToInstall.length ? 'CAC → install, '+cacToInstall.length+' orders' : noData,
+      overdue: hasBase ? String(overdue.length) : '—',
+      overdueSub: hasBase ? 'Open, past baseline, no FOC' : noData,
+      overdueColor: overdue.length ? '#B91C1C' : '#5B8C1F'
+    };
+
     // ---- revenue to Hyper ----
     // Carrier-billed: the carrier bills the customer, so Hyper only earns the
     // master agent commission. Hyper-billed: Hyper bills the customer the MRC
@@ -945,6 +1128,29 @@ class Component extends DCLogic {
       g.count++; g.mrr+=o.mrr; g.ma+=(o.ma||0); g.net+=o.net;
     });
     const groupList=Object.values(groups).sort((a,b)=>b.net-a.net).slice(0,12);
+
+    // ---- forecast: roll the delivery team's forecast MRR (spreadsheet MRC) into a total ----
+    // Unmatched rows carry no HubSpot commission, so their revenue to Hyper is
+    // estimated from the blended MA rate of matched deals — master+product first,
+    // then master agent, then the whole book.
+    const rateOf=(list)=>{ const m=sum(list,o=>o.mrr), a=sum(list,o=>o.ma||0); return m?a/m:null; };
+    const blendedRate=rateOf(matched);
+    const rateByKey={}, rateByMaster={};
+    matched.forEach(o=>{
+      const k1=(o.masterName||'—')+' · '+(o.service||'—');
+      (rateByKey[k1]||(rateByKey[k1]=[])).push(o);
+      const k2=o.masterName||'—';
+      (rateByMaster[k2]||(rateByMaster[k2]=[])).push(o);
+    });
+    const estNet=(o)=>{
+      const k1=(o.masterName||'—')+' · '+(o.service||'—');
+      const r = rateOf(rateByKey[k1]||[]) ?? rateOf(rateByMaster[o.masterName||'—']||[]) ?? blendedRate;
+      if(r==null) return o.billedHyper ? o.mrr : 0;
+      const ma=o.mrr*r;
+      return o.billedHyper ? o.mrr+ma : ma;
+    };
+    const forecastVal=sum(revBook,o=>o.hit?o.net:estNet(o));
+    const estUnmatched=forecastVal-sum(matched,o=>o.net);
     const live = matched.length>0;
     const partial = live && unmatched.length>0;
     const caveat = !live ? 'HubSpot not connected — commission not included'
@@ -958,6 +1164,12 @@ class Component extends DCLogic {
       netInstalledSub: live ? ('Recognised today'+(partial?' · '+caveat:'')) : caveat,
       netPending: live ? this.fmtMRC(sum(pendingBook,o=>o.net)) : '—',
       netPendingSub: live ? ('Turns on at install'+(partial?' · '+caveat:'')) : caveat,
+      forecastAll: this.fmtMRC(forecastVal),
+      forecastSub: !live
+        ? 'Forecast from uploaded MRR only — HubSpot not connected'
+        : (unmatched.length
+            ? 'Actual + '+this.fmtMRC(estUnmatched)+' est. on '+unmatched.length+' unmatched'
+            : 'All orders matched — equals actual'),
       maAmountVal: live ? this.fmtMRC(sum(revBook,o=>o.ma||0)) : '—',
       maAmountSub: live ? ('Commission Hyper earns'+(partial?' · '+caveat:'')) : caveat,
       carrierNet:this.fmtMRC(sum(carrierBook,o=>o.net)), carrierCount:carrierBook.length,
@@ -1007,9 +1219,9 @@ class Component extends DCLogic {
 
     // ---- monthly volume ----
     const monthBars=[];
-    const base=new Date(this.TODAY.getFullYear(), this.TODAY.getMonth(), 1);
+    const monthBase=new Date(this.TODAY.getFullYear(), this.TODAY.getMonth(), 1);
     const mc=[];
-    for(let i=11;i>=0;i--){ const d=new Date(base.getFullYear(), base.getMonth()-i, 1); mc.push({y:d.getFullYear(), m:d.getMonth()}); }
+    for(let i=11;i>=0;i--){ const d=new Date(monthBase.getFullYear(), monthBase.getMonth()-i, 1); mc.push({y:d.getFullYear(), m:d.getMonth()}); }
     const counts=mc.map(mm=>orders.filter(o=>{const d=this.parseDate(o['Contract Sign Date']); return d&&d.getFullYear()===mm.y&&d.getMonth()===mm.m;}).length);
     const maxC=Math.max(1,...counts);
     mc.forEach((mm,i)=>{
@@ -1118,7 +1330,7 @@ class Component extends DCLogic {
       : (renewMode ? '· '+actionQueue.length+' contracts due within a year, soonest first' : '· '+actionQueue.length+' open orders, oldest first');
 
     // ====== ORDER TABLE ======
-    const COLW=[92,124,148,248,132,168,78,62,116,104,104,242];
+    const COLW=[92,168,148,248,132,168,78,62,116,104,104,242];
     const orderCols=[
       {key:'Status',label:'STATUS'},{key:'Hyper Deal #',label:'DEAL #'},{key:'Type',label:'TYPE'},
       {key:'Customer',label:'CUSTOMER'},{key:'Carrier',label:'CARRIER'},{key:'Service',label:'SERVICE'},
@@ -1143,9 +1355,29 @@ class Component extends DCLogic {
     const slice=filtered.slice((page-1)*this.PAGE, page*this.PAGE);
     const chipMap={Closed:['Installed','#E5F5D6','#4E7A1B'],Open:['In Delivery','#FEEAD3','#C2410C'],Cancelled:['Cancelled','#FDE0E0','#B91C1C']};
     const tdBase={padding:compact?'6px 13px':'9px 13px',verticalAlign:'middle',color:'#3F4651',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'};
+    // HubSpot link + note affordance for a row, when its deal number matched a live deal
+    const hsBits=(o, num, name)=>{
+      const kk=this.dealKey(num);
+      const hit=kk?hsMap[kk]:null;
+      const id=hit&&hit.id;
+      const pushed=id?((s.noteLog||{})[id]||[]).length:0;
+      return {
+        hsUrl: id?('https://app.hubspot.com/contacts/'+this.HUB_PORTAL+'/record/0-3/'+id):null,
+        hsLinked: !!id,
+        hsLinkStyle: id
+          ? {color:'#1A1D23',fontWeight:'700',textDecoration:'none',borderBottom:'1px dotted #B7C0CB',fontVariantNumeric:'tabular-nums'}
+          : {color:'#8A93A0',fontVariantNumeric:'tabular-nums'},
+        onNote: id?(()=>this.openNote({hsId:id, num:String(num||''), name:name||(hit&&hit.name)||'', stage:(hit&&hit.stage)||''})):(()=>{}),
+        noteBtnStyle: id
+          ? {marginLeft:'7px',background:pushed?'#F1F9E8':'#fff',border:'1px solid '+(pushed?'#D3E9B4':'#D9DEE4'),color:pushed?'#3F6B14':'#5A6472',borderRadius:'5px',padding:'1px 6px',fontSize:'10px',fontWeight:'800',fontFamily:'inherit',cursor:'pointer',letterSpacing:'.2px'}
+          : {display:'none'},
+        noteBtnLabel: pushed?'✎ '+pushed:'✎'
+      };
+    };
     const orderRows=slice.map(r=>{
       const cm=chipMap[r.Status]||[r.Status||'—','#EEF0F3','#5A6472'];
       return {
+        ...hsBits(r, r['Hyper Deal #'], r.Customer),
         statusLabel:cm[0],
         chipStyle:{display:'inline-block',padding:'3px 9px',borderRadius:'20px',fontSize:'10.5px',fontWeight:'700',whiteSpace:'nowrap',background:cm[1],color:cm[2]},
         deal:this.txt(r['Hyper Deal #']), type:this.txt(r.Type), customer:this.txt(r.Customer),
@@ -1185,6 +1417,7 @@ class Component extends DCLogic {
     const dealRows=dslice.map(d=>{
       const cm=chipMap[d.Status]||[d.Status||'—','#EEF0F3','#5A6472'];
       return {
+        ...hsBits(d, d['Deal Number'], d['Deal Name']||d.Customer),
         statusLabel:cm[0],
         statusStyle:{display:'inline-block',padding:'3px 9px',borderRadius:'20px',fontSize:'10.5px',fontWeight:'700',whiteSpace:'nowrap',background:cm[1],color:cm[2]},
         dealNum:this.txt(d['Deal Number']),
@@ -1201,7 +1434,7 @@ class Component extends DCLogic {
     });
 
     // ---- shared styles ----
-    const tableStyle={width:'100%',borderCollapse:'collapse',fontSize:compact?'12px':'12.5px',minWidth:'1518px',tableLayout:'fixed'};
+    const tableStyle={width:'100%',borderCollapse:'collapse',fontSize:compact?'12px':'12.5px',minWidth:'1562px',tableLayout:'fixed'};
     const dealTableStyle=tableStyle;
     const td={...tdBase};
     const tdNowrap={...tdBase,whiteSpace:'nowrap'};
@@ -1213,12 +1446,49 @@ class Component extends DCLogic {
       ? {background:'#15171C',color:'#fff',borderRadius:'6px',padding:'5px 11px',fontSize:'11px',fontWeight:'700',cursor:'pointer',letterSpacing:'.2px'}
       : {display:'none'};
 
+    // ---- HubSpot note composer ----
+    const nf=s.noteFor;
+    const nlog=nf?((s.noteLog||{})[nf.hsId]||[]):[];
+    const note={
+      open:!!nf,
+      panelStyle: nf
+        ? {position:'fixed',right:'22px',bottom:'22px',width:'380px',background:'#fff',borderRadius:'11px',boxShadow:'0 18px 46px rgba(15,23,42,.22)',border:'1px solid #E6EAEF',padding:'16px 18px',zIndex:60}
+        : {display:'none'},
+      title: nf?(nf.name||'Deal '+nf.num):'',
+      sub: nf?('Deal #'+nf.num+(nf.stage?' · '+nf.stage:'')):'',
+      hsUrl: nf?('https://app.hubspot.com/contacts/'+this.HUB_PORTAL+'/record/0-3/'+nf.hsId):'#',
+      text:s.noteText,
+      onText:e=>this.setState({noteText:e.target.value}),
+      onPush:()=>this.pushRowNote(),
+      onClose:()=>this.closeNote(),
+      btnLabel:s.notePushing?'Pushing…':'Push this note to HubSpot',
+      btnStyle:{background:s.notePushing?'#8A93A0':'#5B8C1F',color:'#fff',border:'none',borderRadius:'6px',padding:'8px 14px',fontSize:'12px',fontWeight:'800',fontFamily:'inherit',cursor:s.notePushing?'default':'pointer'},
+      msg:s.noteMsg,
+      msgStyle:{fontSize:'11.5px',fontWeight:'700',color:s.noteOk?'#3F6B14':(s.noteMsg?'#B45309':'#8A93A0')},
+      history: nlog.slice().reverse().slice(0,4).map(n=>({
+        when:new Date(n.at).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+(n.by?' · '+n.by:''),
+        text:n.text.length>120?n.text.slice(0,120)+'…':n.text
+      })),
+      historyLabel: nlog.length ? nlog.length+' note'+(nlog.length===1?'':'s')+' pushed from here' : 'No notes pushed from here yet',
+      hint:'Only what you type here is sent — earlier notes stay where they are.'
+    };
+
+    // visible diagnostic: are deal numbers actually resolving to HubSpot records?
+    const linkable=[...orders,...dowd].filter(o=>{ const kk=keyOf(o); return kk&&hsMap[kk]&&hsMap[kk].id; }).length;
+    const linkNote = !s.hsRev
+      ? (s.hsRevLoading ? 'Checking HubSpot…' : 'HubSpot not connected — no deal links (' + (s.hsRevMsg||'') + ')')
+      : linkable
+        ? linkable+' rows linked to HubSpot — click a deal # to open it, ✎ to add a note'
+        : 'HubSpot connected but no deal numbers matched — links unavailable';
+    const linkNoteStyle = {fontSize:'11px',fontWeight:'600',color:(!s.hsRev||!linkable)?'#B45309':'#3F6B14'};
+
     return {
+      note, linkNote, linkNoteStyle,
       asOf:'July 24, 2026',
       years, yearScopeLabel,
       billedPills, statusPills, matchPills, clearAll, clearAllStyle, matchFilterNote,
       uploadSlots, uploadNote, uploadNoteStyle, upMsg:s.upMsg, upWho:s.upWho, onWho,
-      k, statusSegments, donutGradient, typeBars, typeOptions, monthBars, carrierBars, serviceBars, carrierCount, serviceCount,
+      k, base, statusSegments, donutGradient, typeBars, typeOptions, monthBars, carrierBars, serviceBars, carrierCount, serviceCount,
       intervals, ivTitle, ivGridCols, basisLabel,
       actionQueue, queueEmpty, queueTitle, queueHeading, queueLabel,
       activeLabel: activeDef?activeDef.label:'',
