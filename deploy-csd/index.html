@@ -33,7 +33,7 @@
     <div style="display:flex;align-items:center;gap:26px;">
       <div style="text-align:right;">
         <div style="color:#fff;font-weight:700;font-size:16px;letter-spacing:0.2px;">Delivery Tracker Dashboard</div>
-        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; As of {{ asOf }} &nbsp;·&nbsp; Build 2026.08.25-c</div>
+        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; As of {{ asOf }} &nbsp;·&nbsp; Build 2026.08.25-e</div>
       </div>
     </div>
   </header>
@@ -1083,29 +1083,37 @@ class Component extends DCLogic {
     const bookAll=[...orders,...dowd].filter(o=>o.Status!=='Cancelled');
     const baseDays=o=>o.International?this.BASE_FOC_INTL:this.BASE_FOC;
     const dd=(a,b)=>{ const x=this.parseDate(a), y=this.parseDate(b); return (x&&y)?Math.round((y-x)/86400000):null; };
-    const withCac=bookAll.filter(o=>this.parseDate(o['CAD Date']));
-    const cacToFoc=withCac.map(o=>({o, d:dd(o['CAD Date'],o['FOC Date'])})).filter(r=>r.d!=null);
+    // The baseline clock starts at the Carrier Acceptance Date. Until CAD is on the
+    // sheets, fall back to Submitted to Carrier so the metrics still calculate.
+    const startOf=o=>o['CAD Date']||o['Submitted to Carrier'];
+    const withCac=bookAll.filter(o=>this.parseDate(startOf(o)));
+    const realCad=withCac.filter(o=>this.parseDate(o['CAD Date'])).length;
+    const cacToFoc=withCac.map(o=>({o, d:dd(startOf(o),o['FOC Date'])})).filter(r=>r.d!=null&&r.d>=0);
     const onTime=cacToFoc.filter(r=>r.d<=baseDays(r.o));
-    const cacToInstall=withCac.map(o=>({o, d:dd(o['CAD Date'],o['Install Date'])})).filter(r=>r.d!=null);
+    const cacToInstall=withCac.map(o=>({o, d:dd(startOf(o),o['Install Date'])})).filter(r=>r.d!=null&&r.d>=0);
     const overdue=withCac.filter(o=>{
       if(o['FOC Date']||o.Status==='Closed') return false;
-      const age=dd(o['CAD Date'], new Date().toISOString().slice(0,10));
+      const age=dd(startOf(o), new Date().toISOString().slice(0,10));
       return age!=null && age>baseDays(o);
     });
     const avg=list=>list.length?Math.round(list.reduce((a,r)=>a+r.d,0)/list.length):null;
     const hasBase=withCac.length>0;
-    const noData='Add CAD / FOC columns to the sheet';
+    const clockLabel = realCad ? 'CAD' : 'Submitted to Carrier';
+    const noData='Add a CAD or Submitted to Carrier date to the sheet';
+    const noFoc = hasBase ? 'No FOC dates on the sheets yet — add a FOC Date column' : noData;
+    const noInstall = hasBase ? 'No install dates on the sheets yet' : noData;
     const base={
       hasBase,
       trackedLabel: hasBase
-        ? withCac.length+' orders with a CAD date · baseline '+this.BASE_FOC+'d domestic / '+this.BASE_FOC_INTL+'d international'
-        : 'No CAD dates in the current books yet',
+        ? withCac.length+' orders on the clock · start = '+clockLabel+' · baseline '+this.BASE_FOC+'d domestic / '+this.BASE_FOC_INTL+'d international'
+            +(realCad ? ' · '+realCad+' with a real CAD' : ' · no CAD column on the sheets yet')
+        : 'No start dates in the current books yet',
       hitRate: cacToFoc.length ? Math.round(onTime.length/cacToFoc.length*100)+'%' : '—',
-      hitRateSub: cacToFoc.length ? onTime.length+' of '+cacToFoc.length+' FOCs within baseline' : noData,
+      hitRateSub: cacToFoc.length ? onTime.length+' of '+cacToFoc.length+' FOCs within baseline' : noFoc,
       avgFoc: avg(cacToFoc)==null?'—':avg(cacToFoc)+'d',
-      avgFocSub: cacToFoc.length ? 'CAD → FOC, '+cacToFoc.length+' orders' : noData,
+      avgFocSub: cacToFoc.length ? clockLabel+' → FOC, '+cacToFoc.length+' orders' : noFoc,
       avgInstall: avg(cacToInstall)==null?'—':avg(cacToInstall)+'d',
-      avgInstallSub: cacToInstall.length ? 'CAD → install, '+cacToInstall.length+' orders' : noData,
+      avgInstallSub: cacToInstall.length ? clockLabel+' → install, '+cacToInstall.length+' orders' : noInstall,
       overdue: hasBase ? String(overdue.length) : '—',
       overdueSub: hasBase ? 'Open, past baseline, no FOC' : noData,
       overdueColor: overdue.length ? '#B91C1C' : '#5B8C1F'
