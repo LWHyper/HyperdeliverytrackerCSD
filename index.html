@@ -409,6 +409,7 @@
           </sc-for>
         </select>
         <button onClick="{{ exportOrders }}" style="background:#15171C;color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.3px;">↓ Export CSV</button>
+        <div style="{{ linkNoteStyle }}">{{ linkNote }}</div>
       </div>
     </div>
     <div style="background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(20,30,50,.07);overflow:hidden;">
@@ -469,6 +470,7 @@
               <option value="Open">Open / In Delivery</option>
               <option value="Closed">Closed</option>
             </select>
+            <div style="{{ linkNoteStyle }}">{{ linkNote }}</div>
             <button onClick="{{ exportDeals }}" style="background:#15171C;color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.3px;">↓ Export CSV</button>
           </div>
         </div>
@@ -1471,8 +1473,17 @@ class Component extends DCLogic {
       hint:'Only what you type here is sent — earlier notes stay where they are.'
     };
 
+    // visible diagnostic: are deal numbers actually resolving to HubSpot records?
+    const linkable=[...orders,...dowd].filter(o=>{ const kk=keyOf(o); return kk&&hsMap[kk]&&hsMap[kk].id; }).length;
+    const linkNote = !s.hsRev
+      ? (s.hsRevLoading ? 'Checking HubSpot…' : 'HubSpot not connected — no deal links (' + (s.hsRevMsg||'') + ')')
+      : linkable
+        ? linkable+' rows linked to HubSpot — click a deal # to open it, ✎ to add a note'
+        : 'HubSpot connected but no deal numbers matched — links unavailable';
+    const linkNoteStyle = {fontSize:'11px',fontWeight:'600',color:(!s.hsRev||!linkable)?'#B45309':'#3F6B14'};
+
     return {
-      note,
+      note, linkNote, linkNoteStyle,
       asOf:'July 24, 2026',
       years, yearScopeLabel,
       billedPills, statusPills, matchPills, clearAll, clearAllStyle, matchFilterNote,
