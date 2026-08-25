@@ -31,10 +31,9 @@
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:26px;">
-      <a href="./Lauren%20Walker%20Projects.dc.html" style="color:#8DC63F;font-size:12px;font-weight:700;letter-spacing:.4px;white-space:nowrap;">My Projects →</a>
       <div style="text-align:right;">
         <div style="color:#fff;font-weight:700;font-size:16px;letter-spacing:0.2px;">Delivery Tracker Dashboard</div>
-        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; As of {{ asOf }}</div>
+        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; As of {{ asOf }} &nbsp;·&nbsp; Build 2026.08.25-a</div>
       </div>
     </div>
   </header>
@@ -59,6 +58,7 @@
       </div>
       <div style="display:flex;align-items:center;gap:12px;">
         <div style="font-size:11.5px;color:#9AA3AF;font-weight:600;">{{ yearScopeLabel }}</div>
+        <button onClick="{{ exportAll }}" style="background:#15171C;color:#fff;border:none;border-radius:6px;padding:8px 14px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;letter-spacing:.2px;white-space:nowrap;">{{ exportAllLabel }}</button>
         <div onClick="{{ clearAll }}" style="{{ clearAllStyle }}">✕ Clear all filters</div>
       </div>
     </div>
@@ -194,14 +194,19 @@
     </div>
     <div style="background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(20,30,50,.07);padding:16px 18px;margin-top:13px;">
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:13px;flex-wrap:wrap;">
-        <div style="font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">Master agent amount by agent &amp; product</div>
-        <div style="font-size:11px;color:#9AA3AF;font-weight:600;">Actual "$ Master Agent (MA) Commission" per deal — rates differ by agent and product</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">{{ rev.groupTitle }}</div>
+        <div style="display:flex;gap:4px;background:#F4F6F8;padding:3px;border-radius:8px;">
+          <sc-for list="{{ rev.maGroupPills }}" as="p" hint-placeholder-count="2">
+            <div onClick="{{ p.onClick }}" style="{{ p.style }}">{{ p.label }}</div>
+          </sc-for>
+        </div>
+        <div style="font-size:11px;color:#9AA3AF;font-weight:600;">{{ rev.groupSub }}</div>
         <button onClick="{{ rev.onRefresh }}" style="{{ rev.refreshStyle }}">{{ rev.refreshLabel }}</button>
         <div style="font-size:11px;color:#9AA3AF;font-weight:600;margin-left:auto;">{{ rev.syncLabel }}</div>
       </div>
       <div style="display:grid;grid-template-columns:1.2fr 1fr 110px 110px 74px 110px;padding:7px 12px;background:#FAFBFC;border:1px solid #EDEFF2;border-radius:7px 7px 0 0;">
         <div style="font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#8A93A0;">Master agent</div>
-        <div style="font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#8A93A0;">Product</div>
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#8A93A0;">{{ rev.productColLabel }}</div>
         <div style="font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#8A93A0;text-align:right;">MRR</div>
         <div style="font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#8A93A0;text-align:right;">MA amount</div>
         <div style="font-size:9.5px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;color:#8A93A0;text-align:right;">Rate</div>
@@ -549,7 +554,7 @@
         </sc-for>
       </div>
       <div style="font-size:11px;color:#9AA3AF;margin-top:14px;line-height:1.5;">
-        Tip: click a deal number in either table to open it in HubSpot, or the ✎ button to add a note to that deal. First sheet only. Column headers are matched by name — Status, Type, Billed To, Deal Number, Customer, Address, Master Agent, Carrier, Service, MRR, Term, Contract Sign Date, Submitted to Carrier, Sales Rep, Install Date, Expiration Date, Order Update, Notes, plus the new baseline fields — <strong>Carrier Acceptance Call (CAC)</strong>, <strong>FOC Date</strong> and <strong>International</strong> (Y/N, drives the 180-day baseline). Extra columns are ignored; an upload replaces that book entirely.
+        Tip: click a deal number in either table to open it in HubSpot, or the ✎ button to add a note and set the Carrier Installation Date on that deal. First sheet only. Column headers are matched by name — Status, Type, Billed To, Deal Number, Customer, Address, Master Agent, Carrier, Service, MRR, Term, Contract Sign Date, Submitted to Carrier, Sales Rep, Install Date, Expiration Date, Order Update, Notes, plus the baseline date fields — <strong>Carrier Acceptance Date (CAD/CAC)</strong>, <strong>FOC Date</strong>, <strong>Carrier Install Date</strong> and <strong>International</strong> (Y/N, drives the 180-day baseline). Extra columns are ignored; an upload replaces that book entirely.
       </div>
     </div>
 
@@ -569,6 +574,14 @@
         <a href="{{ note.hsUrl }}" target="_blank" rel="noopener" style="font-size:11.5px;font-weight:700;color:#3F6B14;text-decoration:none;border-bottom:1px dotted #B7C0CB;">Open in HubSpot ↗</a>
       </div>
       <div style="{{ note.msgStyle }}">{{ note.msg }}</div>
+      <div style="margin-top:13px;padding-top:12px;border-top:1px solid #EDEFF2;">
+        <div style="font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#8A93A0;">Carrier Installation Date</div>
+        <div style="display:flex;align-items:center;gap:9px;margin-top:7px;">
+          <input type="date" value="{{ note.instDate }}" onChange="{{ note.onInstDate }}" style="border:1px solid #D9DEE4;border-radius:6px;padding:6px 9px;font-size:12px;font-family:inherit;color:#1A1D23;flex:1;min-width:0;" />
+          <button onClick="{{ note.onInstPush }}" style="{{ note.instBtnStyle }}">{{ note.instBtnLabel }}</button>
+        </div>
+        <div style="{{ note.instMsgStyle }}">{{ note.instMsg }}</div>
+      </div>
       <div style="margin-top:13px;padding-top:11px;border-top:1px solid #EDEFF2;">
         <div style="font-size:9.5px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#8A93A0;">{{ note.historyLabel }}</div>
         <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px;">
@@ -591,6 +604,7 @@ class Component extends DCLogic {
     loaded:false, orders:[], dowd:[],
     search:'', statusFilter:'', typeFilter:'',
     sortCol:'Submitted to Carrier', sortDir:-1, page:1,
+    instDate:'', instMsg:'', instOk:false, instPushing:false, maGroupBy:'agent',
     dealSearch:'', dealStatusFilter:'', activeInterval:null,
     dealSortCol:'Submitted to Carrier', dealSortDir:-1, dealPage:1,
     yearFilter:'all', billedFilter:'all', gStatus:'all', matchFilter:'all',
@@ -638,6 +652,7 @@ class Component extends DCLogic {
     'carrier order #':'Carrier Order #','carrier order':'Carrier Order #','order #':'Carrier Order #',
     'carrier account #':'Carrier Account #','carrier account':'Carrier Account #','account #':'Carrier Account #',
     'install date':'Install Date','installed':'Install Date','installation date':'Install Date','install':'Install Date',
+    'carrier install date':'Install Date','carrier installation date':'Install Date','carrier install':'Install Date',
     'expiration date':'Expiration Date','expires':'Expiration Date','contract expiration':'Expiration Date',
     'update':'Update','last update':'Update','updated':'Update',
     'order update':'Order Update','delivery log':'Order Update','log':'Order Update',
@@ -645,6 +660,7 @@ class Component extends DCLogic {
     'contract':'Contract',
     // delivery baseline fields
     'cac':'CAC Date','cac date':'CAC Date','carrier acceptance call':'CAC Date','carrier acceptance call date':'CAC Date','carrier acceptance call "cac"':'CAC Date','cac call':'CAC Date','cac call date':'CAC Date',
+    'cad':'CAC Date','cad date':'CAC Date','carrier acceptance date':'CAC Date','carrier acceptance date "cad"':'CAC Date','carrier acceptance':'CAC Date',
     'foc':'FOC Date','foc date':'FOC Date','firm order commitment':'FOC Date','firm order commitment date':'FOC Date','carrier foc':'FOC Date',
     'international':'International','intl':'International','international?':'International','intl?':'International','domestic/international':'International','region':'International'
   };
@@ -862,9 +878,28 @@ class Component extends DCLogic {
     try{ this.setState({noteLog:JSON.parse(localStorage.getItem(this.NOTE_LOG_KEY)||'{}')||{}}); }catch(e){}
   }
   openNote(rec){
-    this.setState({noteFor:rec, noteText:'', noteMsg:'', noteOk:false});
+    this.setState({noteFor:rec, noteText:'', noteMsg:'', noteOk:false,
+      instDate:rec.install||'', instMsg:'', instOk:false, instPushing:false});
   }
-  closeNote(){ this.setState({noteFor:null, noteText:'', noteMsg:'', noteOk:false}); }
+  closeNote(){ this.setState({noteFor:null, noteText:'', noteMsg:'', noteOk:false, instDate:'', instMsg:'', instOk:false}); }
+
+  // ---- push the Carrier Installation Date straight into the HubSpot deal ----
+  pushInstallDate(){
+    const r=this.state.noteFor; if(!r) return;
+    const date=(this.state.instDate||'').trim();
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){ this.setState({instMsg:'Pick a date first.', instOk:false}); return; }
+    this.setState({instPushing:true, instMsg:'', instOk:false});
+    fetch('/api/hubspot-install-date',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({dealId:String(r.hsId), date})})
+      .then(res=>res.text().then(t=>{
+        let d=null; try{ d=JSON.parse(t); }catch(e){}
+        if(!d) return {ok:false, msg:'Live push only works on the deployed site — not in preview.'};
+        if(res.ok&&d.ok) return {ok:true, msg:'Carrier Installation Date saved on the deal ✓'};
+        return {ok:false, msg:d.error||'Push failed'};
+      }))
+      .then(({ok,msg})=>this.setState({instPushing:false, instMsg:msg, instOk:ok}))
+      .catch(()=>this.setState({instPushing:false, instOk:false, instMsg:"Couldn't reach HubSpot — check the deployed site is online."}));
+  }
   pushRowNote(){
     const r=this.state.noteFor; if(!r) return;
     const text=(this.state.noteText||'').trim();
@@ -1120,14 +1155,24 @@ class Component extends DCLogic {
     const hyperBook=revBook.filter(o=>o.billedHyper);
     const billedMRCAll=sum(revBook,o=>o.mrr);
     const netAllVal=sum(revBook,o=>o.net);
-    // per master agent + product, from the matched deals
+    // per master agent, optionally broken out by product (rates differ by both)
+    const byProduct=(s.maGroupBy||'agent')==='product';
     const groups={};
     matched.forEach(o=>{
-      const key=(o.masterName||'—')+' · '+(o.service||'—');
-      const g=groups[key]||(groups[key]={master:o.masterName||'—', service:o.service||'—', count:0, mrr:0, ma:0, net:0});
+      const master=o.masterName||'—', service=o.service||'—';
+      const key=byProduct ? master+' · '+service : master;
+      const g=groups[key]||(groups[key]={master, service, count:0, mrr:0, ma:0, net:0, products:{}});
       g.count++; g.mrr+=o.mrr; g.ma+=(o.ma||0); g.net+=o.net;
+      g.products[service]=(g.products[service]||0)+1;
     });
-    const groupList=Object.values(groups).sort((a,b)=>b.net-a.net).slice(0,12);
+    const groupList=Object.values(groups).sort((a,b)=>b.net-a.net).slice(0,byProduct?16:12)
+      .map(g=>{
+        if(byProduct) return g;
+        const names=Object.keys(g.products).filter(n=>n&&n!=='—').sort((a,b)=>g.products[b]-g.products[a]);
+        return {...g, service: names.length
+          ? (names.length===1 ? names[0] : names.length+' products · '+names.slice(0,2).join(', ')+(names.length>2?'…':''))
+          : 'no product on deal'};
+      });
 
     // ---- forecast: roll the delivery team's forecast MRR (spreadsheet MRC) into a total ----
     // Unmatched rows carry no HubSpot commission, so their revenue to Hyper is
@@ -1187,6 +1232,21 @@ class Component extends DCLogic {
         rate: g.mrr ? (g.ma/g.mrr*100).toFixed(1)+'%' : '—'
       })),
       groupsEmpty: groupList.length===0,
+      groupTitle: byProduct ? 'Master agent amount by agent & product' : 'Master agent amount by agent',
+      groupSub: byProduct
+        ? 'One row per agent + product — rates differ by product, so this is the reconciling view'
+        : 'One row per master agent · the Rate column is the blended rate across that agent\u2019s products',
+      productColLabel: byProduct ? 'Product' : 'Products in scope',
+      maGroupPills: [
+        {key:'agent', label:'By agent'},
+        {key:'product', label:'By agent + product'}
+      ].map(p=>({
+        label:p.label,
+        onClick:()=>this.setState({maGroupBy:p.key}),
+        style:{padding:'4px 10px',borderRadius:'6px',fontSize:'11px',fontWeight:'700',cursor:'pointer',userSelect:'none',
+          background:(s.maGroupBy||'agent')===p.key?'#15171C':'transparent',
+          color:(s.maGroupBy||'agent')===p.key?'#fff':'#5A6472'}
+      })),
       scopeNote:'Cancelled orders excluded · '+(s.yearFilter==='all'?'all years':s.yearFilter)
     };
 
@@ -1357,6 +1417,7 @@ class Component extends DCLogic {
     const tdBase={padding:compact?'6px 13px':'9px 13px',verticalAlign:'middle',color:'#3F4651',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'};
     // HubSpot link + note affordance for a row, when its deal number matched a live deal
     const hsBits=(o, num, name)=>{
+      const seedInstall=this.isoDate(o&&(o['Install Date']))||'';
       const kk=this.dealKey(num);
       const hit=kk?hsMap[kk]:null;
       const id=hit&&hit.id;
@@ -1367,7 +1428,7 @@ class Component extends DCLogic {
         hsLinkStyle: id
           ? {color:'#1A1D23',fontWeight:'700',textDecoration:'none',borderBottom:'1px dotted #B7C0CB',fontVariantNumeric:'tabular-nums'}
           : {color:'#8A93A0',fontVariantNumeric:'tabular-nums'},
-        onNote: id?(()=>this.openNote({hsId:id, num:String(num||''), name:name||(hit&&hit.name)||'', stage:(hit&&hit.stage)||''})):(()=>{}),
+        onNote: id?(()=>this.openNote({hsId:id, num:String(num||''), name:name||(hit&&hit.name)||'', stage:(hit&&hit.stage)||'', install:seedInstall})):(()=>{}),
         noteBtnStyle: id
           ? {marginLeft:'7px',background:pushed?'#F1F9E8':'#fff',border:'1px solid '+(pushed?'#D3E9B4':'#D9DEE4'),color:pushed?'#3F6B14':'#5A6472',borderRadius:'5px',padding:'1px 6px',fontSize:'10px',fontWeight:'800',fontFamily:'inherit',cursor:'pointer',letterSpacing:'.2px'}
           : {display:'none'},
@@ -1470,7 +1531,15 @@ class Component extends DCLogic {
         text:n.text.length>120?n.text.slice(0,120)+'…':n.text
       })),
       historyLabel: nlog.length ? nlog.length+' note'+(nlog.length===1?'':'s')+' pushed from here' : 'No notes pushed from here yet',
-      hint:'Only what you type here is sent — earlier notes stay where they are.'
+      hint:'Only what you type here is sent — earlier notes stay where they are.',
+      // Carrier Installation Date → HubSpot
+      instDate:s.instDate||'',
+      onInstDate:e=>this.setState({instDate:e.target.value, instMsg:'', instOk:false}),
+      onInstPush:()=>this.pushInstallDate(),
+      instBtnLabel:s.instPushing?'Saving…':'Push date to HubSpot',
+      instBtnStyle:{background:s.instPushing?'#8A93A0':'#15171C',color:'#fff',border:'none',borderRadius:'6px',padding:'7px 12px',fontSize:'11.5px',fontWeight:'800',fontFamily:'inherit',cursor:s.instPushing?'default':'pointer',whiteSpace:'nowrap'},
+      instMsg:s.instMsg,
+      instMsgStyle:{fontSize:'11px',fontWeight:'700',marginTop:'5px',color:s.instOk?'#3F6B14':(s.instMsg?'#B45309':'#8A93A0')}
     };
 
     // visible diagnostic: are deal numbers actually resolving to HubSpot records?
@@ -1523,6 +1592,23 @@ class Component extends DCLogic {
         dfiltered.forEach(d=>rows.push(cols.map(c=>this.csvCell(d[c])).join(',')));
         this.download(rows.join('\n'),'dowd_delivery_report.csv');
       },
+      // one file, both books, every filter applied
+      exportAll:()=>{
+        const cols=['Source','Status','Deal #','Type','Customer','Carrier','Service','MRR','Term','Sales Rep','Billed To',
+          'Submitted to Carrier','CAC Date','FOC Date','Install Date','Expiration Date','International','Address'];
+        const pick=(r,src)=>cols.map(c=>{
+          if(c==='Source') return this.csvCell(src);
+          if(c==='Deal #') return this.csvCell(r['Hyper Deal #']||r['Deal Number']);
+          if(c==='MRR') return this.csvCell(r.MRR!=null?r.MRR:r.MRC);
+          if(/Date|Submitted/.test(c)) return this.csvCell(this.isoDate(r[c])||'');
+          return this.csvCell(r[c]);
+        }).join(',');
+        const rows=[cols.join(',')];
+        filtered.forEach(o=>rows.push(pick(o,'Hyper Tracker')));
+        dfiltered.forEach(d=>rows.push(pick(d,'Delivery Report')));
+        this.download(rows.join('\n'),'hyper_csd_all_data_'+new Date().toISOString().slice(0,10)+'.csv');
+      },
+      exportAllLabel:'↓ Export all data ('+(filtered.length+dfiltered.length)+' rows)',
       // shared
       tableStyle, dealTableStyle, td, tdNowrap, tdNum, tdMrc, tdAddr, pageBtnStyle
     };
