@@ -33,7 +33,7 @@
     <div style="display:flex;align-items:center;gap:26px;">
       <div style="text-align:right;">
         <div style="color:#fff;font-weight:700;font-size:16px;letter-spacing:0.2px;">Delivery Tracker Dashboard</div>
-        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; As of {{ asOf }} &nbsp;·&nbsp; Build 2026.08.25-e</div>
+        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; As of {{ asOf }} &nbsp;·&nbsp; Build 2026.09.18-a</div>
       </div>
     </div>
   </header>
@@ -89,6 +89,16 @@
           </sc-for>
         </div>
         <span style="font-size:11px;color:#B45309;font-weight:600;">{{ matchFilterNote }}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;">
+        <span style="font-size:10.5px;font-weight:800;letter-spacing:1.1px;text-transform:uppercase;color:#8A93A0;">Customer</span>
+        <select value="{{ custFilter }}" onChange="{{ onCustFilter }}" style="border:1px solid #D9DEE4;border-radius:8px;padding:7px 11px;font-size:12.5px;font-family:inherit;background:#fff;color:#1A1D23;font-weight:600;min-width:230px;max-width:320px;">
+          <option value="all">All customers</option>
+          <sc-for list="{{ custOptions }}" as="c" hint-placeholder-count="4">
+            <option value="{{ c.value }}">{{ c.label }}</option>
+          </sc-for>
+        </select>
+        <div onClick="{{ inFlightOnly }}" style="{{ inFlightStyle }}">In flight only</div>
       </div>
     </div>
 
@@ -606,7 +616,7 @@ class Component extends DCLogic {
     instDate:'', instMsg:'', instOk:false, instPushing:false, maGroupBy:'agent',
     dealSearch:'', dealStatusFilter:'', activeInterval:null,
     dealSortCol:'Submitted to Carrier', dealSortDir:-1, dealPage:1,
-    yearFilter:'all', billedFilter:'all', gStatus:'all', matchFilter:'all',
+    yearFilter:'all', billedFilter:'all', gStatus:'all', matchFilter:'all', custFilter:'all',
     noteFor:null, noteText:'', notePushing:false, noteMsg:'', noteOk:false, noteLog:{},
     hsRev:null, hsRevMsg:'', hsRevLoading:false,
     roster:{}, rosterOk:null, upBusy:'', upMsg:'', upWho:''
@@ -1015,8 +1025,26 @@ class Component extends DCLogic {
       if(s.gStatus!=='all' && o.Status!==s.gStatus) return false;
       if(s.billedFilter!=='all' && billerOf(o)!==s.billedFilter) return false;
       if(s.matchFilter!=='all'){ const hit=hitOf(o); if(s.matchFilter==='matched' ? !hit : !!hit) return false; }
+      if(s.custFilter!=='all' && String(o.Customer||'').trim()!==s.custFilter) return false;
       return true;
     };
+
+    // ---- customer options (label shows how many of that customer's orders are in flight) ----
+    const custStats={};
+    [...ordersY,...dowdY].forEach(o=>{
+      const c=String(o.Customer||'').trim(); if(!c) return;
+      if(!custStats[c]) custStats[c]={total:0,flight:0};
+      custStats[c].total++; if(o.Status==='Open') custStats[c].flight++;
+    });
+    const custOptions=Object.keys(custStats).sort((a,b)=>
+      (custStats[b].flight-custStats[a].flight) || a.localeCompare(b)
+    ).map(c=>({value:c, label:c+' — '+custStats[c].flight+' in flight / '+custStats[c].total+' total'}));
+    const onCustFilter=e=>this.setState({custFilter:e.target.value, page:1, dealPage:1});
+    const inFlightOnly=()=>this.setState({gStatus:s.gStatus==='Open'?'all':'Open', page:1, dealPage:1});
+    const inFlightStyle=s.gStatus==='Open'
+      ? {padding:'7px 13px',borderRadius:'8px',fontSize:'12px',fontWeight:'700',cursor:'pointer',userSelect:'none',background:'#C2410C',color:'#fff',whiteSpace:'nowrap'}
+      : {padding:'7px 13px',borderRadius:'8px',fontSize:'12px',fontWeight:'700',cursor:'pointer',userSelect:'none',background:'#fff',color:'#5A6472',boxShadow:'0 1px 3px rgba(20,30,50,.07)',whiteSpace:'nowrap'};
+
     const orders = ordersY.filter(gPass);
     const dowd = dowdY.filter(gPass);
 
@@ -1051,6 +1079,7 @@ class Component extends DCLogic {
     if(s.billedFilter!=='all') scopeBits.push('billed to '+(s.billedFilter==='hyper'?'Hyper Networks':'Customer'));
     if(s.gStatus!=='all') scopeBits.push(s.gStatus==='Open'?'in delivery':s.gStatus==='Closed'?'installed':'cancelled');
     if(s.matchFilter!=='all') scopeBits.push(s.matchFilter==='matched'?'matched to HubSpot':'unmatched');
+    if(s.custFilter!=='all') scopeBits.push(s.custFilter);
     const anyFilter = scopeBits.length>0;
     const yearScopeLabel = anyFilter
       ? (orders.length+dowd.length)+' orders · '+scopeBits.join(' · ')
@@ -1058,7 +1087,7 @@ class Component extends DCLogic {
     const clearAllStyle = anyFilter
       ? {fontSize:'11.5px',fontWeight:'700',color:'#B45309',cursor:'pointer',userSelect:'none'}
       : {display:'none'};
-    const clearAll=()=>this.setState({yearFilter:'all',billedFilter:'all',gStatus:'all',matchFilter:'all',page:1,dealPage:1});
+    const clearAll=()=>this.setState({yearFilter:'all',billedFilter:'all',gStatus:'all',matchFilter:'all',custFilter:'all',page:1,dealPage:1});
     const matchFilterNote = s.matchFilter!=='all' && !s.hsRev
       ? 'HubSpot not connected — match filter has no effect yet' : '';
 
@@ -1559,6 +1588,7 @@ class Component extends DCLogic {
       asOf:'July 24, 2026',
       years, yearScopeLabel,
       billedPills, statusPills, matchPills, clearAll, clearAllStyle, matchFilterNote,
+      custOptions, custFilter:s.custFilter, onCustFilter, inFlightOnly, inFlightStyle,
       uploadSlots, uploadNote, uploadNoteStyle, upMsg:s.upMsg, upWho:s.upWho, onWho,
       k, base, statusSegments, donutGradient, typeBars, typeOptions, monthBars, carrierBars, serviceBars, carrierCount, serviceCount,
       intervals, ivTitle, ivGridCols, basisLabel,
