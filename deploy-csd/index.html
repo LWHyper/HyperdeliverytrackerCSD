@@ -33,7 +33,7 @@
     <div style="display:flex;align-items:center;gap:26px;">
       <div style="text-align:right;">
         <div style="color:#fff;font-weight:700;font-size:16px;letter-spacing:0.2px;">Delivery Tracker Dashboard</div>
-        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; As of {{ asOf }} &nbsp;·&nbsp; Build 2026.09.18-a</div>
+        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; Data as of {{ asOf }} &nbsp;·&nbsp; Build 2026.09.18-a</div>
       </div>
     </div>
   </header>
@@ -1585,7 +1585,12 @@ class Component extends DCLogic {
 
     return {
       note, linkNote, linkNoteStyle,
-      asOf:'July 24, 2026',
+      asOf: (()=>{
+        const ts=Object.values(roster||{}).map(r=>r&&r.uploadedAt).filter(Boolean).map(t=>new Date(t)).filter(d=>!isNaN(d));
+        if(!ts.length) return 'built-in sample data';
+        const d=new Date(Math.max(...ts));
+        return d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+      })(),
       years, yearScopeLabel,
       billedPills, statusPills, matchPills, clearAll, clearAllStyle, matchFilterNote,
       custOptions, custFilter:s.custFilter, onCustFilter, inFlightOnly, inFlightStyle,
