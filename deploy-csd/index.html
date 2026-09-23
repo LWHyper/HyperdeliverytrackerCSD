@@ -99,6 +99,7 @@
           </sc-for>
         </select>
         <div onClick="{{ inFlightOnly }}" style="{{ inFlightStyle }}">In flight only</div>
+        <a href="{{ hyperiqUrl }}" target="_blank" rel="noopener noreferrer" style="padding:7px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;user-select:none;background:#fff;color:#5A6472;box-shadow:0 1px 3px rgba(20,30,50,.07);white-space:nowrap;text-decoration:none;">Open in HyperIQ ↗</a>
       </div>
     </div>
 
@@ -616,7 +617,7 @@ class Component extends DCLogic {
     instDate:'', instMsg:'', instOk:false, instPushing:false, maGroupBy:'agent',
     dealSearch:'', dealStatusFilter:'', activeInterval:null,
     dealSortCol:'Submitted to Carrier', dealSortDir:-1, dealPage:1,
-    yearFilter:'all', billedFilter:'all', gStatus:'all', matchFilter:'all', custFilter:'all',
+    yearFilter:'all', billedFilter:'all', gStatus:'all', matchFilter:'all', custFilter:this.readCustParam(),
     noteFor:null, noteText:'', notePushing:false, noteMsg:'', noteOk:false, noteLog:{},
     hsRev:null, hsRevMsg:'', hsRevLoading:false,
     roster:{}, rosterOk:null, upBusy:'', upMsg:'', upWho:''
@@ -626,6 +627,41 @@ class Component extends DCLogic {
   PAGE = 12;
   DPAGE = 10;
   MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  // HyperIQ tenant id → customer names exactly as they appear in this dashboard's data (first = preferred)
+  HYPERIQ_TENANT = {
+    hgv:['Hilton Grand Vacation Company LLC','Hilton Grand Vacations'],
+    snc:['Sierra Nevada Corp'],
+    sspace:['Sierra Space','Sierra Space Corporation'],
+    rsh:['RS Hughes Company','RS Hughes Company, Inc'],
+    greenspun:['Greenspun Media Group'],
+    tlc:['TLC Casinos Enterprises, Inc.','TLC Casinos Enterprises'],
+  };
+  readCustParam(){
+    try{ const v=new URLSearchParams(window.location.search).get('customer'); return v&&v.trim()?v.trim():'all'; }catch(e){ return 'all'; }
+  }
+  tenantFor(name){
+    const n=String(name||'').trim().toLowerCase();
+    for(const id in this.HYPERIQ_TENANT){ if(this.HYPERIQ_TENANT[id].some(a=>a.toLowerCase()===n)) return id; }
+    return null;
+  }
+  // raw = tenant id or customer name → a customer present in names, else 'all'
+  resolveCust(raw, names){
+    if(!raw||raw==='all') return 'all';
+    const r=String(raw).trim(), rl=r.toLowerCase();
+    const aliases=this.HYPERIQ_TENANT[rl];
+    if(aliases){ for(const a of aliases){ const hit=names.find(n=>n.toLowerCase()===a.toLowerCase()); if(hit) return hit; } return 'all'; }
+    return names.find(n=>n.toLowerCase()===rl) || 'all';
+  }
+  setCust(name){
+    this.setState({custFilter:name, page:1, dealPage:1});
+    try{
+      const u=new URL(window.location.href);
+      if(!name||name==='all') u.searchParams.delete('customer');
+      else u.searchParams.set('customer', this.tenantFor(name)||name);
+      window.history.replaceState(window.history.state,'',u.pathname+u.search+u.hash);
+    }catch(e){}
+  }
 
   componentDidMount(){
     this.loadRevenue();
@@ -1025,7 +1061,7 @@ class Component extends DCLogic {
       if(s.gStatus!=='all' && o.Status!==s.gStatus) return false;
       if(s.billedFilter!=='all' && billerOf(o)!==s.billedFilter) return false;
       if(s.matchFilter!=='all'){ const hit=hitOf(o); if(s.matchFilter==='matched' ? !hit : !!hit) return false; }
-      if(s.custFilter!=='all' && String(o.Customer||'').trim()!==s.custFilter) return false;
+      if(custSel!=='all' && String(o.Customer||'').trim()!==custSel) return false;
       return true;
     };
 
@@ -1037,7 +1073,12 @@ class Component extends DCLogic {
       custStats[c].total++; if(o.Status==='Open') custStats[c].flight++;
     });
     const custOptions=Object.keys(custStats).sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base',numeric:true})).map(c=>({value:c, label:c+' — '+custStats[c].flight+' in flight / '+custStats[c].total+' total'}));
-    const onCustFilter=e=>this.setState({custFilter:e.target.value, page:1, dealPage:1});
+    const custNames=Object.keys(custStats);
+    // before data loads keep the raw URL value; once loaded, unknown values fall back to all customers
+    const custSel = custNames.length ? this.resolveCust(s.custFilter, custNames) : 'all';
+    const onCustFilter=e=>this.setCust(e.target.value);
+    const hqTenant = custSel!=='all' ? this.tenantFor(custSel) : null;
+    const hyperiqUrl = hqTenant ? 'https://hyperiq.netlify.app/?tenant='+encodeURIComponent(hqTenant) : 'https://hyperiq.netlify.app/';
     const inFlightOnly=()=>this.setState({gStatus:s.gStatus==='Open'?'all':'Open', page:1, dealPage:1});
     const inFlightStyle=s.gStatus==='Open'
       ? {padding:'7px 13px',borderRadius:'8px',fontSize:'12px',fontWeight:'700',cursor:'pointer',userSelect:'none',background:'#C2410C',color:'#fff',whiteSpace:'nowrap'}
@@ -1077,7 +1118,7 @@ class Component extends DCLogic {
     if(s.billedFilter!=='all') scopeBits.push('billed to '+(s.billedFilter==='hyper'?'Hyper Networks':'Customer'));
     if(s.gStatus!=='all') scopeBits.push(s.gStatus==='Open'?'in delivery':s.gStatus==='Closed'?'installed':'cancelled');
     if(s.matchFilter!=='all') scopeBits.push(s.matchFilter==='matched'?'matched to HubSpot':'unmatched');
-    if(s.custFilter!=='all') scopeBits.push(s.custFilter);
+    if(custSel!=='all') scopeBits.push(custSel);
     const anyFilter = scopeBits.length>0;
     const yearScopeLabel = anyFilter
       ? (orders.length+dowd.length)+' orders · '+scopeBits.join(' · ')
@@ -1085,7 +1126,7 @@ class Component extends DCLogic {
     const clearAllStyle = anyFilter
       ? {fontSize:'11.5px',fontWeight:'700',color:'#B45309',cursor:'pointer',userSelect:'none'}
       : {display:'none'};
-    const clearAll=()=>this.setState({yearFilter:'all',billedFilter:'all',gStatus:'all',matchFilter:'all',custFilter:'all',page:1,dealPage:1});
+    const clearAll=()=>{ this.setCust('all'); this.setState({yearFilter:'all',billedFilter:'all',gStatus:'all',matchFilter:'all',page:1,dealPage:1}); };
     const matchFilterNote = s.matchFilter!=='all' && !s.hsRev
       ? 'HubSpot not connected — match filter has no effect yet' : '';
 
@@ -1591,7 +1632,7 @@ class Component extends DCLogic {
       })(),
       years, yearScopeLabel,
       billedPills, statusPills, matchPills, clearAll, clearAllStyle, matchFilterNote,
-      custOptions, custFilter:s.custFilter, onCustFilter, inFlightOnly, inFlightStyle,
+      custOptions, custFilter:custSel, onCustFilter, hyperiqUrl, inFlightOnly, inFlightStyle,
       uploadSlots, uploadNote, uploadNoteStyle, upMsg:s.upMsg, upWho:s.upWho, onWho,
       k, base, statusSegments, donutGradient, typeBars, typeOptions, monthBars, carrierBars, serviceBars, carrierCount, serviceCount,
       intervals, ivTitle, ivGridCols, basisLabel,
