@@ -33,7 +33,7 @@
     <div style="display:flex;align-items:center;gap:26px;">
       <div style="text-align:right;">
         <div style="color:#fff;font-weight:700;font-size:16px;letter-spacing:0.2px;">Delivery Tracker Dashboard</div>
-        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; Data as of {{ asOf }} &nbsp;·&nbsp; Build 2026.09.18-a</div>
+        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; {{ asOf }} &nbsp;·&nbsp; Build 2026.09.18-a</div>
       </div>
     </div>
   </header>
@@ -1036,9 +1036,7 @@ class Component extends DCLogic {
       if(!custStats[c]) custStats[c]={total:0,flight:0};
       custStats[c].total++; if(o.Status==='Open') custStats[c].flight++;
     });
-    const custOptions=Object.keys(custStats).sort((a,b)=>
-      (custStats[b].flight-custStats[a].flight) || a.localeCompare(b)
-    ).map(c=>({value:c, label:c+' — '+custStats[c].flight+' in flight / '+custStats[c].total+' total'}));
+    const custOptions=Object.keys(custStats).sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base',numeric:true})).map(c=>({value:c, label:c+' — '+custStats[c].flight+' in flight / '+custStats[c].total+' total'}));
     const onCustFilter=e=>this.setState({custFilter:e.target.value, page:1, dealPage:1});
     const inFlightOnly=()=>this.setState({gStatus:s.gStatus==='Open'?'all':'Open', page:1, dealPage:1});
     const inFlightStyle=s.gStatus==='Open'
@@ -1587,9 +1585,9 @@ class Component extends DCLogic {
       note, linkNote, linkNoteStyle,
       asOf: (()=>{
         const ts=Object.values(roster||{}).map(r=>r&&r.uploadedAt).filter(Boolean).map(t=>new Date(t)).filter(d=>!isNaN(d));
-        if(!ts.length) return 'built-in sample data';
+        if(!ts.length) return 'Using built-in sample data';
         const d=new Date(Math.max(...ts));
-        return d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
+        return 'Data as of '+d.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'});
       })(),
       years, yearScopeLabel,
       billedPills, statusPills, matchPills, clearAll, clearAllStyle, matchFilterNote,
