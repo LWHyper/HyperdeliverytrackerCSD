@@ -7,11 +7,26 @@
   node_bundler = "esbuild"
 
 [[headers]]
-  for = "/data/*"
-  [headers.values]
-    Cache-Control = "no-store"
-
-[[headers]]
   for = "/api/*"
   [headers.values]
     Cache-Control = "no-store"
+
+# The order books are served only through /api/data (login required).
+# Block every direct download of the raw data and the server source.
+[[redirects]]
+  from = "/data/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/netlify/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/package.json"
+  to = "/404.html"
+  status = 404
+  force = true

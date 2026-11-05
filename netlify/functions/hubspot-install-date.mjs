@@ -10,6 +10,8 @@
  * Requires the service key to have: crm.objects.deals.write (+ crm.schemas.deals.read)
  */
 
+import { requireUser } from '../lib/auth.mjs';
+
 const TOKEN = process.env.HUBSPOT_TOKEN;
 const PORTAL = process.env.HS_PORTAL_ID || '47345387';
 const OVERRIDE = process.env.HS_INSTALL_PROP || '';
@@ -35,8 +37,10 @@ async function resolveProp() {
   return cachedProp;
 }
 
-export default async (req) => {
+export default async (req, context) => {
   const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+  const auth = await requireUser(req, context, { edit: true });
+  if (auth.error) return auth.error;
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'POST only' }), { status: 405, headers });
   if (!TOKEN) return new Response(JSON.stringify({ error: 'HUBSPOT_TOKEN not set on this Netlify project' }), { status: 500, headers });
 

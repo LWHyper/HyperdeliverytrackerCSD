@@ -3,6 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Delivery Tracker Dashboard · Hyper Networks</title>
+<script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+<script src="./auth.js"></script>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -33,7 +36,14 @@
     <div style="display:flex;align-items:center;gap:26px;">
       <div style="text-align:right;">
         <div style="color:#fff;font-weight:700;font-size:16px;letter-spacing:0.2px;">Delivery Tracker Dashboard</div>
-        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; {{ asOf }} &nbsp;·&nbsp; Build 2026.09.18-a</div>
+        <div style="color:#8A93A0;font-size:11px;margin-top:2px;letter-spacing:0.3px;">Order Book &amp; Delivery Pipeline &nbsp;·&nbsp; {{ asOf }} &nbsp;·&nbsp; Build 2026.11.05-auth</div>
+      </div>
+      <div style="{{ authBoxStyle }}">
+        <div style="text-align:right;line-height:1.25;">
+          <div style="color:#fff;font-size:12.5px;font-weight:700;white-space:nowrap;">{{ authName }}</div>
+          <div style="{{ authRoleStyle }}">{{ authRole }}</div>
+        </div>
+        <button type="button" onClick="{{ signOut }}" style="background:transparent;color:#C9D1DA;border:1px solid #3A3F48;border-radius:6px;padding:7px 12px;min-height:34px;font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;">Sign out</button>
       </div>
     </div>
   </header>
@@ -99,6 +109,7 @@
           </sc-for>
         </select>
         <div onClick="{{ inFlightOnly }}" style="{{ inFlightStyle }}">In flight only</div>
+        <a href="{{ hyperiqUrl }}" target="_blank" rel="noopener noreferrer" style="padding:7px 13px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;user-select:none;background:#fff;color:#5A6472;box-shadow:0 1px 3px rgba(20,30,50,.07);white-space:nowrap;text-decoration:none;">Open in HyperIQ ↗</a>
       </div>
     </div>
 
@@ -541,8 +552,9 @@
     </div>
     <div style="background:#fff;border-radius:9px;box-shadow:0 1px 3px rgba(20,30,50,.07);padding:18px 20px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
-        <span style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">Your name</span>
-        <input value="{{ upWho }}" onInput="{{ onWho }}" placeholder="so the team knows who uploaded" style="border:1px solid #D9DEE4;border-radius:6px;padding:7px 11px;font-size:12.5px;font-family:inherit;width:260px;" />
+        <span style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8A93A0;">Signed in as</span>
+        <span style="font-size:12.5px;font-weight:700;color:#1A1D23;">{{ upWho }}</span>
+        <span style="{{ authRoleStyleLight }}">{{ authRole }}</span>
         <span style="font-size:12px;color:#0F766E;font-weight:600;">{{ upMsg }}</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:14px;">
@@ -616,10 +628,10 @@ class Component extends DCLogic {
     instDate:'', instMsg:'', instOk:false, instPushing:false, maGroupBy:'agent',
     dealSearch:'', dealStatusFilter:'', activeInterval:null,
     dealSortCol:'Submitted to Carrier', dealSortDir:-1, dealPage:1,
-    yearFilter:'all', billedFilter:'all', gStatus:'all', matchFilter:'all', custFilter:'all',
+    yearFilter:'all', billedFilter:'all', gStatus:'all', matchFilter:'all', custFilter:this.readCustParam(),
     noteFor:null, noteText:'', notePushing:false, noteMsg:'', noteOk:false, noteLog:{},
     hsRev:null, hsRevMsg:'', hsRevLoading:false,
-    roster:{}, rosterOk:null, upBusy:'', upMsg:'', upWho:''
+    roster:{}, rosterOk:null, upBusy:'', upMsg:'', upWho:'', auth:null
   };
 
   TODAY = new Date('2026-07-24T00:00:00');
@@ -627,13 +639,53 @@ class Component extends DCLogic {
   DPAGE = 10;
   MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
+  // HyperIQ tenant id → customer names exactly as they appear in this dashboard's data (first = preferred)
+  HYPERIQ_TENANT = {
+    hgv:['Hilton Grand Vacation Company LLC','Hilton Grand Vacations'],
+    snc:['Sierra Nevada Corp'],
+    sspace:['Sierra Space','Sierra Space Corporation'],
+    rsh:['RS Hughes Company','RS Hughes Company, Inc'],
+    greenspun:['Greenspun Media Group'],
+    tlc:['TLC Casinos Enterprises, Inc.','TLC Casinos Enterprises'],
+  };
+  readCustParam(){
+    try{ const v=new URLSearchParams(window.location.search).get('customer'); return v&&v.trim()?v.trim():'all'; }catch(e){ return 'all'; }
+  }
+  tenantFor(name){
+    const n=String(name||'').trim().toLowerCase();
+    for(const id in this.HYPERIQ_TENANT){ if(this.HYPERIQ_TENANT[id].some(a=>a.toLowerCase()===n)) return id; }
+    return null;
+  }
+  // raw = tenant id or customer name → a customer present in names, else 'all'
+  resolveCust(raw, names){
+    if(!raw||raw==='all') return 'all';
+    const r=String(raw).trim(), rl=r.toLowerCase();
+    const aliases=this.HYPERIQ_TENANT[rl];
+    if(aliases){ for(const a of aliases){ const hit=names.find(n=>n.toLowerCase()===a.toLowerCase()); if(hit) return hit; } return 'all'; }
+    return names.find(n=>n.toLowerCase()===rl) || 'all';
+  }
+  setCust(name){
+    this.setState({custFilter:name, page:1, dealPage:1});
+    try{
+      const u=new URL(window.location.href);
+      if(!name||name==='all') u.searchParams.delete('customer');
+      else u.searchParams.set('customer', this.tenantFor(name)||name);
+      window.history.replaceState(window.history.state,'',u.pathname+u.search+u.hash);
+    }catch(e){}
+  }
+
   componentDidMount(){
+    // who is signed in (set by auth.js); the name stamps uploads and notes
+    const onAuth=()=>{ const a=window.hnAuth||null; this.setState({auth:a, upWho:a?a.name:''}); };
+    window.addEventListener('hn-auth', onAuth); onAuth();
+    // every /api call below waits for a login, then sends the user's token
     this.loadRevenue();
     this.loadRoster();
     this.loadNoteLog();
-    import('./data/data.js').then(m=>{
-      this.setState({ loaded:true, orders:m.ORDERS, dowd:m.DOWD });
-    }).catch(e=>console.error('data load failed', e));
+    fetch('/api/data',{cache:'no-store'})
+      .then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status)))
+      .then(m=>this.setState({ loaded:true, orders:m.ORDERS||[], dowd:m.DOWD||[] }))
+      .catch(e=>console.error('data load failed', e));
   }
 
   BOOKS = [
@@ -958,6 +1010,7 @@ class Component extends DCLogic {
 
   renderVals(){
     const s=this.state;
+    const auth=s.auth; const canEdit=!!(auth&&auth.canEdit);
     const density=this.props.tableDensity ?? 'Comfortable';
     const basis=this.props.intervalBasis ?? 'Delivery Aging';
     const showPipeline=this.props.showPipeline ?? true;
@@ -993,12 +1046,14 @@ class Component extends DCLogic {
               ? {display:'inline-flex',alignSelf:'flex-start',alignItems:'center',gap:'6px',background:'#F1F9E8',color:'#3F6B14',border:'1px solid #D3E9B4',borderRadius:'999px',padding:'4px 11px',fontSize:'11.5px',fontWeight:'800',letterSpacing:'.3px'}
               : {display:'none'}),
         btnLabel: busy ? 'Working…' : (rec&&rec.rows&&rec.rows.length ? 'Replace .xlsx' : 'Upload .xlsx'),
-        btnStyle:{display:'inline-flex',alignItems:'center',gap:'6px',background:'#15171C',color:'#fff',borderRadius:'6px',padding:'7px 13px',fontSize:'12px',fontWeight:'700',cursor:busy?'default':'pointer',opacity:busy?.6:1},
+        btnStyle:canEdit?{display:'inline-flex',alignItems:'center',gap:'6px',background:'#15171C',color:'#fff',borderRadius:'6px',padding:'7px 13px',fontSize:'12px',fontWeight:'700',cursor:busy?'default':'pointer',opacity:busy?.6:1}:{display:'none'},
         onPick:(e)=>this.onPickFile(b.key,e),
         inputId:'up-'+b.key
       };
     });
-    const uploadNote = s.rosterOk===false
+    const uploadNote = !canEdit
+      ? 'View only. Admins and Connectivity Specialists can upload sheets.'
+      : s.rosterOk===false
       ? 'Shared storage unreachable — uploads still load the dashboard on this computer, but the team won\u2019t see them until the site runs from GitHub.'
       : 'An upload sticks — it stays live for everyone until someone uploads a newer version of that sheet.';
     const uploadNoteStyle = s.rosterOk===false
@@ -1025,7 +1080,7 @@ class Component extends DCLogic {
       if(s.gStatus!=='all' && o.Status!==s.gStatus) return false;
       if(s.billedFilter!=='all' && billerOf(o)!==s.billedFilter) return false;
       if(s.matchFilter!=='all'){ const hit=hitOf(o); if(s.matchFilter==='matched' ? !hit : !!hit) return false; }
-      if(s.custFilter!=='all' && String(o.Customer||'').trim()!==s.custFilter) return false;
+      if(custSel!=='all' && String(o.Customer||'').trim()!==custSel) return false;
       return true;
     };
 
@@ -1037,7 +1092,12 @@ class Component extends DCLogic {
       custStats[c].total++; if(o.Status==='Open') custStats[c].flight++;
     });
     const custOptions=Object.keys(custStats).sort((a,b)=>a.localeCompare(b,undefined,{sensitivity:'base',numeric:true})).map(c=>({value:c, label:c+' — '+custStats[c].flight+' in flight / '+custStats[c].total+' total'}));
-    const onCustFilter=e=>this.setState({custFilter:e.target.value, page:1, dealPage:1});
+    const custNames=Object.keys(custStats);
+    // before data loads keep the raw URL value; once loaded, unknown values fall back to all customers
+    const custSel = custNames.length ? this.resolveCust(s.custFilter, custNames) : 'all';
+    const onCustFilter=e=>this.setCust(e.target.value);
+    const hqTenant = custSel!=='all' ? this.tenantFor(custSel) : null;
+    const hyperiqUrl = hqTenant ? 'https://hyperiq.netlify.app/?tenant='+encodeURIComponent(hqTenant) : 'https://hyperiq.netlify.app/';
     const inFlightOnly=()=>this.setState({gStatus:s.gStatus==='Open'?'all':'Open', page:1, dealPage:1});
     const inFlightStyle=s.gStatus==='Open'
       ? {padding:'7px 13px',borderRadius:'8px',fontSize:'12px',fontWeight:'700',cursor:'pointer',userSelect:'none',background:'#C2410C',color:'#fff',whiteSpace:'nowrap'}
@@ -1077,7 +1137,7 @@ class Component extends DCLogic {
     if(s.billedFilter!=='all') scopeBits.push('billed to '+(s.billedFilter==='hyper'?'Hyper Networks':'Customer'));
     if(s.gStatus!=='all') scopeBits.push(s.gStatus==='Open'?'in delivery':s.gStatus==='Closed'?'installed':'cancelled');
     if(s.matchFilter!=='all') scopeBits.push(s.matchFilter==='matched'?'matched to HubSpot':'unmatched');
-    if(s.custFilter!=='all') scopeBits.push(s.custFilter);
+    if(custSel!=='all') scopeBits.push(custSel);
     const anyFilter = scopeBits.length>0;
     const yearScopeLabel = anyFilter
       ? (orders.length+dowd.length)+' orders · '+scopeBits.join(' · ')
@@ -1085,7 +1145,7 @@ class Component extends DCLogic {
     const clearAllStyle = anyFilter
       ? {fontSize:'11.5px',fontWeight:'700',color:'#B45309',cursor:'pointer',userSelect:'none'}
       : {display:'none'};
-    const clearAll=()=>this.setState({yearFilter:'all',billedFilter:'all',gStatus:'all',matchFilter:'all',custFilter:'all',page:1,dealPage:1});
+    const clearAll=()=>{ this.setCust('all'); this.setState({yearFilter:'all',billedFilter:'all',gStatus:'all',matchFilter:'all',page:1,dealPage:1}); };
     const matchFilterNote = s.matchFilter!=='all' && !s.hsRev
       ? 'HubSpot not connected — match filter has no effect yet' : '';
 
@@ -1459,7 +1519,7 @@ class Component extends DCLogic {
           ? {color:'#1A1D23',fontWeight:'700',textDecoration:'none',borderBottom:'1px dotted #B7C0CB',fontVariantNumeric:'tabular-nums'}
           : {color:'#8A93A0',fontVariantNumeric:'tabular-nums'},
         onNote: id?(()=>this.openNote({hsId:id, num:String(num||''), name:name||(hit&&hit.name)||'', stage:(hit&&hit.stage)||'', install:seedInstall})):(()=>{}),
-        noteBtnStyle: id
+        noteBtnStyle: (id&&canEdit)
           ? {marginLeft:'7px',background:pushed?'#F1F9E8':'#fff',border:'1px solid '+(pushed?'#D3E9B4':'#D9DEE4'),color:pushed?'#3F6B14':'#5A6472',borderRadius:'5px',padding:'1px 6px',fontSize:'10px',fontWeight:'800',fontFamily:'inherit',cursor:'pointer',letterSpacing:'.2px'}
           : {display:'none'},
         noteBtnLabel: pushed?'✎ '+pushed:'✎'
@@ -1583,6 +1643,11 @@ class Component extends DCLogic {
 
     return {
       note, linkNote, linkNoteStyle,
+      authName: auth?auth.name:'', authRole: auth?auth.roleLabel:'',
+      authBoxStyle: auth?{display:'flex',alignItems:'center',gap:'12px',paddingLeft:'20px',borderLeft:'1px solid #2C3038'}:{display:'none'},
+      authRoleStyle:{color:canEdit?'#8DC63F':'#8A93A0',fontSize:'10.5px',fontWeight:'700',letterSpacing:'.6px',textTransform:'uppercase',marginTop:'2px'},
+      authRoleStyleLight:{display:auth?'inline-block':'none',background:canEdit?'#F1F9E8':'#F4F6F8',color:canEdit?'#3F6B14':'#5A6472',border:'1px solid '+(canEdit?'#D3E9B4':'#E6EAEF'),borderRadius:'999px',padding:'2px 9px',fontSize:'10.5px',fontWeight:'800',letterSpacing:'.4px',textTransform:'uppercase'},
+      signOut:()=>{ if(auth&&auth.signOut) auth.signOut(); },
       asOf: (()=>{
         const ts=Object.values(roster||{}).map(r=>r&&r.uploadedAt).filter(Boolean).map(t=>new Date(t)).filter(d=>!isNaN(d));
         if(!ts.length) return 'Using built-in sample data';
@@ -1591,7 +1656,7 @@ class Component extends DCLogic {
       })(),
       years, yearScopeLabel,
       billedPills, statusPills, matchPills, clearAll, clearAllStyle, matchFilterNote,
-      custOptions, custFilter:s.custFilter, onCustFilter, inFlightOnly, inFlightStyle,
+      custOptions, custFilter:custSel, onCustFilter, hyperiqUrl, inFlightOnly, inFlightStyle,
       uploadSlots, uploadNote, uploadNoteStyle, upMsg:s.upMsg, upWho:s.upWho, onWho,
       k, base, statusSegments, donutGradient, typeBars, typeOptions, monthBars, carrierBars, serviceBars, carrierCount, serviceCount,
       intervals, ivTitle, ivGridCols, basisLabel,

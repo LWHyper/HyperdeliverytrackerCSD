@@ -17,6 +17,8 @@
  * Requires HUBSPOT_TOKEN (the pat-… service key).
  */
 
+import { requireUser } from '../lib/auth.mjs';
+
 const TOKEN = process.env.HUBSPOT_TOKEN;
 const API = 'https://api.hubapi.com';
 const MAX_DEALS = 4000;
@@ -61,8 +63,10 @@ const num = v => {
   return isFinite(n) ? n : null;
 };
 
-export default async () => {
+export default async (req, context) => {
   const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+  const auth = await requireUser(req, context);
+  if (auth.error) return auth.error;
   if (!TOKEN) return new Response(JSON.stringify({ error: 'HUBSPOT_TOKEN not set on this Netlify project' }), { status: 500, headers });
   try {
     const P = await resolveProps();

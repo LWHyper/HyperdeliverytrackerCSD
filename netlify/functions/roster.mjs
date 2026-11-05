@@ -8,6 +8,7 @@
  * everyone else sees. Requires a Git-connected deploy (npm install runs).
  */
 import { getStore } from '@netlify/blobs';
+import { requireUser } from '../lib/auth.mjs';
 
 const BOOKS = ['lindsay', 'dowd'];
 const json = (body, status = 200) =>
@@ -16,7 +17,10 @@ const json = (body, status = 200) =>
     headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
   });
 
-export default async (req) => {
+export default async (req, context) => {
+  const auth = await requireUser(req, context, { edit: req.method !== 'GET' });
+  if (auth.error) return auth.error;
+
   let store;
   try {
     store = getStore({ name: 'delivery-books', consistency: 'strong' });
@@ -38,7 +42,8 @@ export default async (req) => {
   if (req.method === 'POST') {
     let body;
     try { body = await req.json(); } catch { return json({ error: 'bad JSON body' }, 400); }
-    const { book, rows, filename, uploadedBy } = body || {};
+    const { book, rows, filename } = body || {};
+    const uploadedBy = auth.user.name || auth.user.email; // from the login, not the form
     if (!BOOKS.includes(book)) return json({ error: 'unknown book: ' + book }, 400);
 
     if (rows == null) {

@@ -10,19 +10,26 @@
  * (same HUBSPOT_TOKEN env var the read endpoint uses).
  */
 
+import { requireUser } from '../lib/auth.mjs';
+
 const TOKEN = process.env.HUBSPOT_TOKEN;
 const PORTAL = process.env.HS_PORTAL_ID || '47345387';
 const NOTE_TO_DEAL = 214; // HubSpot-defined association: note → deal
 
-export default async (req) => {
+export default async (req, context) => {
   const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
+  const auth = await requireUser(req, context, { edit: true });
+  if (auth.error) return auth.error;
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'POST only' }), { status: 405, headers });
   if (!TOKEN) return new Response(JSON.stringify({ error: 'HUBSPOT_TOKEN not set on this Netlify project' }), { status: 500, headers });
 
   let payload = {};
   try { payload = await req.json(); } catch (e) {}
   const dealId = String(payload.dealId || '').trim();
-  const body = String(payload.body || '').trim();
+  const typed = String(payload.body || '').trim();
+  // Stamp the signed-in user on every note so HubSpot shows who pushed it.
+  const body = typed ? typed + '<p style="color:#888">Pushed from the CSD Delivery Tracker by ' +
+    String(auth.user.name || auth.user.email).replace(/[<>&]/g, '') + '</p>' : '';
   if (!dealId) return new Response(JSON.stringify({ error: 'dealId required' }), { status: 400, headers });
   if (!body) return new Response(JSON.stringify({ error: 'Nothing to push — the note is empty' }), { status: 400, headers });
 
