@@ -18,7 +18,7 @@ export const handler = async (event, context) => {
   let store;
   try {
     connectLambda(event);
-    store = getStore({ name: 'delivery-books', consistency: 'strong' });
+    store = getStore({ name: 'delivery-books'});
   } catch (e) {
     return json(500, { error: 'shared storage unavailable: ' + e.message });
   }
