@@ -1,34 +1,29 @@
 /**
- * Shared spreadsheet storage for the CSD Delivery Tracker.
+ * Shared spreadsheet storage for the CSD Delivery Tracker (Netlify Blobs).
  *
- * GET  /api/roster  → { books: { lindsay: {rows, uploadedAt, uploadedBy, filename}, dowd: {...} } }
- * POST /api/roster  → { book, rows, filename, uploadedBy }   rows:null clears the book
- *
- * Uses Netlify Blobs, so an upload by anyone on the delivery team is what
- * everyone else sees. Requires a Git-connected deploy (npm install runs).
+ * GET  /.netlify/functions/roster -> { books: { lindsay: {rows, uploadedAt, uploadedBy, filename}, dowd: {...} } }
+ *      any signed in user
+ * POST /.netlify/functions/roster -> { book, rows, filename }   rows:null clears the book
+ *      admin / connectivity only; uploadedBy comes from the login
  */
-import { getStore } from '@netlify/blobs';
-import { requireUser } from '../lib/auth.mjs';
+import { getStore, connectLambda } from '@netlify/blobs';
+import { requireUser, json } from '../lib/auth.mjs';
 
 const BOOKS = ['lindsay', 'dowd'];
-const json = (body, status = 200) =>
-  new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-  });
 
-export default async (req, context) => {
-  const auth = await requireUser(req, context, { edit: req.method !== 'GET' });
-  if (auth.error) return auth.error;
+export const handler = async (event, context) => {
+  const auth = requireUser(event, context, { edit: event.httpMethod !== 'GET' });
+  if (auth.response) return auth.response;
 
   let store;
   try {
+    connectLambda(event);
     store = getStore({ name: 'delivery-books', consistency: 'strong' });
   } catch (e) {
-    return json({ error: 'shared storage unavailable: ' + e.message }, 500);
+    return json(500, { error: 'shared storage unavailable: ' + e.message });
   }
 
-  if (req.method === 'GET') {
+  if (event.httpMethod === 'GET') {
     const books = {};
     for (const key of BOOKS) {
       try {
@@ -36,34 +31,31 @@ export default async (req, context) => {
         if (rec) books[key] = rec;
       } catch { /* missing key */ }
     }
-    return json({ books });
+    return json(200, { books });
   }
 
-  if (req.method === 'POST') {
+  if (event.httpMethod === 'POST') {
     let body;
-    try { body = await req.json(); } catch { return json({ error: 'bad JSON body' }, 400); }
+    try { body = JSON.parse(event.body || '{}'); } catch { return json(400, { error: 'bad JSON body' }); }
     const { book, rows, filename } = body || {};
-    const uploadedBy = auth.user.name || auth.user.email; // from the login, not the form
-    if (!BOOKS.includes(book)) return json({ error: 'unknown book: ' + book }, 400);
+    if (!BOOKS.includes(book)) return json(400, { error: 'unknown book: ' + book });
 
     if (rows == null) {
       await store.delete(book);
-      return json({ ok: true, cleared: book });
+      return json(200, { ok: true, cleared: book });
     }
-    if (!Array.isArray(rows) || !rows.length) return json({ error: 'rows must be a non-empty array' }, 400);
-    if (rows.length > 20000) return json({ error: 'too many rows (limit 20000)' }, 413);
+    if (!Array.isArray(rows) || !rows.length) return json(400, { error: 'rows must be a non-empty array' });
+    if (rows.length > 20000) return json(413, { error: 'too many rows (limit 20000)' });
 
     await store.setJSON(book, {
       rows,
       count: rows.length,
       filename: filename || '',
-      uploadedBy: uploadedBy || '',
+      uploadedBy: auth.bypassed ? (body.uploadedBy || '') : (auth.user.name || auth.user.email || ''),
       uploadedAt: new Date().toISOString(),
     });
-    return json({ ok: true, book, count: rows.length });
+    return json(200, { ok: true, book, count: rows.length });
   }
 
-  return json({ error: 'method not allowed' }, 405);
+  return json(405, { error: 'method not allowed' });
 };
-
-export const config = { path: '/api/roster' };

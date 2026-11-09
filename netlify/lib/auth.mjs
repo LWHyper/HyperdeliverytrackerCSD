@@ -1,72 +1,71 @@
-/**
- * Shared login check for every /api function on the CSD Delivery Tracker.
- *
- * The page sends the signed-in user's Netlify Identity token as
- *   Authorization: Bearer <token>
- * and this helper asks Netlify Identity who that token belongs to.
- * No token, or an expired one, gets a 401. A user without an edit role
- * gets a 403 on anything that changes data.
- *
- * Roles live on each user in Netlify > Identity > (user) > Roles.
- * EDIT_ROLES (env var, comma separated) overrides the default list.
- */
+// Netlify Identity auth gate for the CSD Delivery Tracker functions.
+// Same design as HyperIQ (Hyper-IQ-HGV/netlify/functions/lib/auth.js).
+//
+// THE POINT OF THIS FILE: the sign in screen in the browser is decoration.
+// Without a server side check, anyone who knows the URL can call
+// /.netlify/functions/revenue directly. Every data function must refuse an
+// unauthenticated request, which is what requireUser() does.
+//
+// HOW IT WORKS: when a request carries `Authorization: Bearer <identity JWT>`,
+// Netlify validates the token itself and exposes the decoded user on
+// context.clientContext.user. We never verify a signature by hand.
+// No user on the context means no valid token.
+//
+// ROLES: set per user in Netlify > Identity > (user) > Roles.
+//   admin, connectivity  -> can upload sheets and push notes / install dates
+//   (no role)            -> view only
 
-export const EDIT_ROLES = (process.env.EDIT_ROLES || 'admin,connectivity')
-  .split(',').map((r) => r.trim().toLowerCase()).filter(Boolean);
+export const EDIT_ROLES = ['admin', 'connectivity'];
 
-const cache = new Map(); // token -> { at, user }
-const CACHE_MS = 60 * 1000;
+const json = (statusCode, body) => ({
+  statusCode,
+  headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+  body: JSON.stringify(body),
+});
 
-const deny = (status, error) =>
-  new Response(JSON.stringify({ error }), {
-    status,
-    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
-  });
+export function authDisabled() {
+  return String(process.env.AUTH_DISABLED || '').toLowerCase() === 'true';
+}
 
-function shape(user) {
+export function getUser(context) {
+  const user = context && context.clientContext && context.clientContext.user;
+  if (!user) return null;
   const roles = ((user.app_metadata && user.app_metadata.roles) || []).map((r) => String(r).toLowerCase());
-  const meta = user.user_metadata || {};
   return {
-    id: user.id || user.sub || '',
-    email: user.email || '',
-    name: meta.full_name || meta.name || user.email || '',
+    id: user.sub || null,
+    email: user.email || null,
+    name: (user.user_metadata && user.user_metadata.full_name) || user.email || null,
     roles,
     canEdit: roles.some((r) => EDIT_ROLES.includes(r)),
   };
 }
 
-async function lookup(req, token, context) {
-  // Some Netlify runtimes attach the verified Identity user directly.
-  const cc = context && context.clientContext && context.clientContext.user;
-  if (cc) return shape(cc);
-
-  const hit = cache.get(token);
-  if (hit && Date.now() - hit.at < CACHE_MS) return hit.user;
-
-  const origin = new URL(req.url).origin;
-  const res = await fetch(origin + '/.netlify/identity/user', {
-    headers: { Authorization: 'Bearer ' + token },
-  });
-  if (!res.ok) return null;
-  const user = shape(await res.json());
-  cache.set(token, { at: Date.now(), user });
-  if (cache.size > 500) cache.delete(cache.keys().next().value);
-  return user;
-}
-
 /**
- * const auth = await requireUser(req, context)               → any signed-in user
- * const auth = await requireUser(req, context, { edit:true }) → admin or connectivity only
- * if (auth.error) return auth.error;   otherwise auth.user = { email, name, roles, canEdit }
+ * Gate a function handler. Returns { user } on success, or { response } to
+ * return immediately.
+ *   requireUser(event, context)               any signed in user
+ *   requireUser(event, context, {edit:true})  admin or connectivity only
+ *
+ * AUTH_DISABLED=true bypasses the gate during rollout. It is a hole in the
+ * only real protection, so remove it once everyone has an account.
  */
-export async function requireUser(req, context, opts = {}) {
-  const m = (req.headers.get('authorization') || '').match(/^Bearer\s+(.+)$/i);
-  if (!m) return { error: deny(401, 'Please sign in.') };
-  let user = null;
-  try { user = await lookup(req, m[1], context); } catch (e) { user = null; }
-  if (!user) return { error: deny(401, 'Your session expired. Please sign in again.') };
+export function requireUser(event, context, opts = {}) {
+  if (authDisabled()) {
+    return { user: { id: 'auth-disabled', email: '', name: 'Auth disabled', roles: [], canEdit: true }, bypassed: true };
+  }
+  const user = getUser(context);
+  if (!user) {
+    return {
+      response: json(401, {
+        error: 'Sign in required.',
+        detail: 'This endpoint needs a Netlify Identity token. If you see this in the dashboard, your session expired. Reload and sign in again.',
+      }),
+    };
+  }
   if (opts.edit && !user.canEdit) {
-    return { error: deny(403, 'Your login is view only. Ask an admin for edit access.') };
+    return { response: json(403, { error: 'Your login is view only. Ask an admin for edit access.' }) };
   }
   return { user };
 }
+
+export { json };

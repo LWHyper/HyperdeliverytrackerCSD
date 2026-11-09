@@ -1,12 +1,16 @@
-/*
- * CSD Delivery Tracker sign in gate (same pattern as HyperIQ).
+/* CSD Delivery Tracker auth gate (Netlify Identity). Same design as HyperIQ's
+ * src/auth.standalone.js.
  *
- * 1. Netlify Identity holds the accounts (invite only).
- * 2. Until someone signs in, a full screen gate covers the page and every
- *    /api call waits, so no data loads in the background.
- * 3. Every /api call carries the user's token. The functions check it and
- *    refuse anything without a valid login, or without an edit role for writes.
- * 4. window.hnAuth + the "hn-auth" event tell the dashboard who is signed in.
+ * Two jobs:
+ * 1. Don't show the dashboard to someone who isn't signed in.
+ * 2. Attach the Identity token to EVERY request to our own functions.
+ *
+ * (2) is the one that matters. The functions reject unauthenticated requests
+ * on their own (netlify/lib/auth.mjs), which is what actually protects the data.
+ *
+ * AUTH_DISABLED (Netlify env var) is the rollout switch: while it is true the
+ * server gate is bypassed and this screen stands down, so nobody is locked out.
+ * The page learns its state from /.netlify/functions/auth-config.
  */
 (function () {
   var EDIT_ROLES = ['admin', 'connectivity'];
@@ -15,18 +19,29 @@
   var userReady = new Promise(function (r) { resolveUser = r; });
   var gate;
 
-  function isApi(input) {
+  // Keep the widget's own forms (sign in, sign up, set password) above the gate.
+  var css = document.createElement('style');
+  css.textContent = '#netlify-identity-widget{z-index:9500 !important;}';
+  document.head.appendChild(css);
+
+  function isOurs(input) {
     try {
       var u = new URL(typeof input === 'string' ? input : input.url, location.href);
-      return u.origin === location.origin && u.pathname.indexOf('/api/') === 0;
+      return u.origin === location.origin &&
+        (u.pathname.indexOf('/.netlify/functions/') === 0 || u.pathname.indexOf('/api/') === 0) &&
+        u.pathname.indexOf('/auth-config') === -1;
     } catch (e) { return false; }
   }
 
-  // Every /api request waits for a login, then carries a fresh token.
-  // user.jwt() refreshes the token when it is close to expiry.
+  /* ---- Token on every request -------------------------------------------
+   * fetch is wrapped rather than each call site being edited, so a new
+   * endpoint added later is authenticated by default. Calls wait for a login,
+   * so no data loads behind the sign in screen. user.jwt() refreshes the
+   * token when it is close to expiry. */
   window.fetch = function (input, opts) {
-    if (!isApi(input)) return nativeFetch(input, opts);
+    if (!isOurs(input)) return nativeFetch(input, opts);
     return userReady.then(function (user) {
+      if (!user) return nativeFetch(input, opts); // AUTH_DISABLED
       return user.jwt().catch(function () {
         return user.token && user.token.access_token;
       }).then(function (token) {
@@ -56,8 +71,8 @@
     };
   }
 
-  function announce(user) {
-    window.hnAuth = user ? describe(user) : null;
+  function announce(info) {
+    window.hnAuth = info;
     window.dispatchEvent(new Event('hn-auth'));
   }
 
@@ -66,19 +81,19 @@
     gate.id = 'hn-gate';
     gate.setAttribute('role', 'dialog');
     gate.setAttribute('aria-label', 'Sign in');
-    gate.style.cssText = 'position:fixed;inset:0;z-index:90;background:#15171C;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,sans-serif;padding:16px;';
+    gate.style.cssText = 'position:fixed;inset:0;z-index:9000;background:#15171C;display:flex;align-items:center;justify-content:center;font-family:Inter,system-ui,sans-serif;padding:16px;';
     gate.innerHTML =
       '<div style="background:#fff;border-radius:12px;max-width:380px;width:100%;padding:32px 28px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35);">' +
         '<div style="width:46px;height:46px;margin:0 auto 14px;background:#8DC63F;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#15171C;">HN</div>' +
         '<div style="font-weight:800;font-size:12px;letter-spacing:2px;color:#5B8C1F;">CSD · HYPER VIEW</div>' +
         '<div style="font-weight:800;font-size:20px;color:#1A1D23;margin-top:6px;">Delivery Tracker Dashboard</div>' +
-        '<div id="hn-gate-msg" style="font-size:13px;color:#5A6472;margin-top:10px;line-height:1.5;">Sign in with your Hyper Networks account to continue.</div>' +
+        '<div id="hn-gate-msg" style="font-size:13px;color:#5A6472;margin-top:10px;line-height:1.5;">Staff sign in. Use your Hyper Networks email.</div>' +
         '<button id="hn-gate-btn" type="button" style="margin-top:20px;width:100%;min-height:44px;background:#15171C;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">Sign in</button>' +
-        '<div style="font-size:11.5px;color:#8A93A0;margin-top:14px;">Access is by invitation. Contact an admin if you need an account.</div>' +
+        '<div style="font-size:11.5px;color:#8A93A0;margin-top:14px;">Need access? Ask Lauren Walker.</div>' +
       '</div>';
     document.body.appendChild(gate);
     gate.querySelector('#hn-gate-btn').addEventListener('click', function () {
-      window.netlifyIdentity.open('login');
+      if (window.netlifyIdentity) window.netlifyIdentity.open('login');
     });
   }
 
@@ -93,36 +108,55 @@
   }
   function hideGate() { if (gate) gate.style.display = 'none'; }
 
-  function start() {
+  function pendingTokenFlow() {
+    return /(invite|recovery|confirmation|email_change)_token=/.test(location.hash || '');
+  }
+
+  // Cover the page from the first paint; it lifts once a login is confirmed.
+  showGate(null);
+
+  // Rollout switch first: with AUTH_DISABLED on, stand the gate down.
+  nativeFetch('/.netlify/functions/auth-config', { cache: 'no-store' })
+    .then(function (r) { return r.ok ? r.json() : {}; })
+    .catch(function () { return {}; })
+    .then(function (cfg) {
+      if (cfg && cfg.authDisabled) {
+        hideGate();
+        announce({ email: '', name: '', roles: [], canEdit: true, roleLabel: 'Sign in not required yet', signOut: function () {} });
+        resolveUser(null);
+        return;
+      }
+      startIdentity();
+    });
+
+  function startIdentity() {
     var ni = window.netlifyIdentity;
     if (!ni) {
-      showGate('The sign in service did not load. Check your connection and refresh.');
+      showGate('The sign in service did not load. Let Lauren know so she can fix it.');
       return;
     }
-    // Invite and password reset links carry a token in the URL. Let the
-    // widget show its own "set your password" form instead of the gate.
-    var tokenFlow = /(invite|recovery|confirmation|email_change)_token=/.test(location.hash);
-    // Cover the page from the first paint; it lifts once a login is confirmed.
-    // The widget's own forms sit above the gate (z-index 99 vs 90).
-    showGate(tokenFlow ? 'Finish setting up your account in the window above.' : null);
-
     ni.on('init', function (user) {
-      if (user) { hideGate(); announce(user); resolveUser(user); }
-      else announce(null);
+      if (user) { hideGate(); announce(describe(user)); resolveUser(user); }
+      else if (pendingTokenFlow()) {
+        hideGate(); // the widget's own set a password form owns the screen
+      } else {
+        showGate(null); announce(null);
+      }
     });
     ni.on('login', function (user) {
       ni.close();
+      // Clear any invite/recovery token so a refresh doesn't replay it.
+      if (pendingTokenFlow()) history.replaceState(null, '', location.pathname + location.search);
       hideGate();
-      if (location.hash) history.replaceState(null, '', location.pathname + location.search);
-      announce(user);
+      announce(describe(user));
       resolveUser(user);
     });
     // Full reload on sign out so nothing stays on screen or in memory.
     ni.on('logout', function () { location.reload(); });
-    ni.init();
+    ni.init({ locale: 'en' });
+    // The widget may already have initialised before this ran (the config
+    // check above is async), in which case "init" won't fire again for us.
+    var existing = ni.currentUser && ni.currentUser();
+    if (existing) { hideGate(); announce(describe(existing)); resolveUser(existing); }
   }
-
-  // Listen right away: the widget can fire "init" as soon as the page loads,
-  // and a listener added later would miss it and leave the gate up.
-  start();
 })();

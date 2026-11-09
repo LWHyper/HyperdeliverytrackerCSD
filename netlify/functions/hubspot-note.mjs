@@ -1,37 +1,33 @@
 /**
- * Hyper CSD — push a dashboard note back into the HubSpot deal timeline.
- * POST /api/hubspot-note   { dealId, body, projectName }
- *   → { ok:true, noteId, url }
- *
- * Creates a Note engagement associated with the deal, so it shows up under
- * the deal's Notes / Activity feed in HubSpot.
- *
+ * Hyper CSD: push a dashboard note into the HubSpot deal timeline.
+ * POST /.netlify/functions/hubspot-note   { dealId, body, projectName }
+ *   -> { ok:true, noteId, url }
+ * Admin / connectivity only. Every note is stamped with the signed in user.
  * Requires the service key to have: crm.objects.notes.write
- * (same HUBSPOT_TOKEN env var the read endpoint uses).
  */
-
-import { requireUser } from '../lib/auth.mjs';
+import { requireUser, json } from '../lib/auth.mjs';
 
 const TOKEN = process.env.HUBSPOT_TOKEN;
 const PORTAL = process.env.HS_PORTAL_ID || '47345387';
-const NOTE_TO_DEAL = 214; // HubSpot-defined association: note → deal
+const NOTE_TO_DEAL = 214; // HubSpot-defined association: note -> deal
 
-export default async (req, context) => {
-  const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
-  const auth = await requireUser(req, context, { edit: true });
-  if (auth.error) return auth.error;
-  if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'POST only' }), { status: 405, headers });
-  if (!TOKEN) return new Response(JSON.stringify({ error: 'HUBSPOT_TOKEN not set on this Netlify project' }), { status: 500, headers });
+export const handler = async (event, context) => {
+  const auth = requireUser(event, context, { edit: true });
+  if (auth.response) return auth.response;
+  if (event.httpMethod !== 'POST') return json(405, { error: 'POST only' });
+  if (!TOKEN) return json(500, { error: 'HUBSPOT_TOKEN not set on this Netlify project' });
 
   let payload = {};
-  try { payload = await req.json(); } catch (e) {}
+  try { payload = JSON.parse(event.body || '{}'); } catch (e) {}
   const dealId = String(payload.dealId || '').trim();
   const typed = String(payload.body || '').trim();
-  // Stamp the signed-in user on every note so HubSpot shows who pushed it.
-  const body = typed ? typed + '<p style="color:#888">Pushed from the CSD Delivery Tracker by ' +
-    String(auth.user.name || auth.user.email).replace(/[<>&]/g, '') + '</p>' : '';
-  if (!dealId) return new Response(JSON.stringify({ error: 'dealId required' }), { status: 400, headers });
-  if (!body) return new Response(JSON.stringify({ error: 'Nothing to push — the note is empty' }), { status: 400, headers });
+  if (!dealId) return json(400, { error: 'dealId required' });
+  if (!typed) return json(400, { error: 'Nothing to push. The note is empty.' });
+
+  const who = String(auth.user.name || auth.user.email || '').replace(/[<>&]/g, '');
+  const body = who && !auth.bypassed
+    ? typed + '<p style="color:#888">Pushed from the CSD Delivery Tracker by ' + who + '</p>'
+    : typed;
 
   try {
     const res = await fetch('https://api.hubapi.com/crm/v3/objects/notes', {
@@ -48,21 +44,15 @@ export default async (req, context) => {
     const text = await res.text();
     if (!res.ok) {
       const scope = /scope|permission|403/i.test(text) || res.status === 403;
-      return new Response(JSON.stringify({
+      return json(502, {
         error: scope
-          ? 'HubSpot refused the write — add the crm.objects.notes.write scope to the service key, then redeploy.'
+          ? 'HubSpot refused the write. Add the crm.objects.notes.write scope to the service key, then redeploy.'
           : `HubSpot ${res.status}: ${text.slice(0, 300)}`,
-      }), { status: 502, headers });
+      });
     }
     const data = JSON.parse(text);
-    return new Response(JSON.stringify({
-      ok: true,
-      noteId: data.id,
-      url: `https://app.hubspot.com/contacts/${PORTAL}/record/0-3/${dealId}/`,
-    }), { headers });
+    return json(200, { ok: true, noteId: data.id, url: `https://app.hubspot.com/contacts/${PORTAL}/record/0-3/${dealId}/` });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e.message || e) }), { status: 502, headers });
+    return json(502, { error: String(e.message || e) });
   }
 };
-
-export const config = { path: '/api/hubspot-note' };

@@ -1,6 +1,6 @@
 /**
  * Hyper CSD — LIVE deal revenue fetch (Netlify Function)
- * GET /api/revenue → { syncedAt, count, matchedOn, records:[…] }
+ * GET /.netlify/functions/revenue → { syncedAt, count, matchedOn, records:[…] }
  *
  * Pulls the money fields off every deal so the Delivery Tracker can show the
  * ACTUAL revenue to Hyper instead of a modelled commission %:
@@ -17,7 +17,7 @@
  * Requires HUBSPOT_TOKEN (the pat-… service key).
  */
 
-import { requireUser } from '../lib/auth.mjs';
+import { requireUser, json } from '../lib/auth.mjs';
 
 const TOKEN = process.env.HUBSPOT_TOKEN;
 const API = 'https://api.hubapi.com';
@@ -63,11 +63,10 @@ const num = v => {
   return isFinite(n) ? n : null;
 };
 
-export default async (req, context) => {
-  const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
-  const auth = await requireUser(req, context);
-  if (auth.error) return auth.error;
-  if (!TOKEN) return new Response(JSON.stringify({ error: 'HUBSPOT_TOKEN not set on this Netlify project' }), { status: 500, headers });
+export const handler = async (event, context) => {
+  const auth = requireUser(event, context);
+  if (auth.response) return auth.response;
+  if (!TOKEN) return json(500, { error: 'HUBSPOT_TOKEN not set on this Netlify project' });
   try {
     const P = await resolveProps();
     const wanted = ['dealname', 'dealstage', 'pipeline', 'closedate', 'amount',
@@ -105,13 +104,11 @@ export default async (req, context) => {
       after = data.paging?.next?.after;
     } while (after && out.length < MAX_DEALS);
 
-    return new Response(JSON.stringify({
+    return json(200, {
       syncedAt: new Date().toISOString(), live: true, count: out.length,
       properties: P, records: out,
-    }), { headers });
+    });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e.message || e) }), { status: 502, headers });
+    return json(502, { error: String(e.message || e) });
   }
 };
-
-export const config = { path: '/api/revenue' };

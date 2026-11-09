@@ -682,7 +682,7 @@ class Component extends DCLogic {
     this.loadRevenue();
     this.loadRoster();
     this.loadNoteLog();
-    fetch('/api/data',{cache:'no-store'})
+    fetch('/.netlify/functions/data',{cache:'no-store'})
       .then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status)))
       .then(m=>this.setState({ loaded:true, orders:m.ORDERS||[], dowd:m.DOWD||[] }))
       .catch(e=>console.error('data load failed', e));
@@ -807,7 +807,7 @@ class Component extends DCLogic {
   loadRoster(){
     const local=this.localBooks();
     if(Object.keys(local).length) this.setState({roster:local});
-    fetch('/api/roster',{cache:'no-store'})
+    fetch('/.netlify/functions/roster',{cache:'no-store'})
       .then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status)))
       .then(j=>{ if(j.error) throw new Error(j.error);
         const books=j.books||{};
@@ -837,7 +837,7 @@ class Component extends DCLogic {
       const local=this.saveLocalBook(book, rec);
       this.setState({roster:{...(this.state.roster||{}), ...local, [book]:rec},
         upBusy:book, upMsg:f.name+' → '+rows.length+' rows loaded · sharing…'});
-      fetch('/api/roster',{method:'POST',headers:{'Content-Type':'application/json'},
+      fetch('/.netlify/functions/roster',{method:'POST',headers:{'Content-Type':'application/json'},
         body:JSON.stringify({book, rows, filename:f.name, uploadedBy:this.state.upWho||''})})
         .then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status)))
         .then(j=>{ if(j.error) throw new Error(j.error);
@@ -851,7 +851,7 @@ class Component extends DCLogic {
     const local=this.saveLocalBook(book, null);
     const roster={...(this.state.roster||{})}; delete roster[book];
     this.setState({upBusy:book, upMsg:'Reverting…', roster:{...roster, ...local}});
-    fetch('/api/roster',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({book, rows:null})})
+    fetch('/.netlify/functions/roster',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({book, rows:null})})
       .then(()=>{ this.setState({upBusy:'', upMsg:'Reverted to the built-in data'}); this.loadRoster(); })
       .catch(()=>this.setState({upBusy:'', upMsg:'Reverted on this computer (shared storage unreachable)'}));
   }
@@ -950,7 +950,7 @@ class Component extends DCLogic {
     const date=(this.state.instDate||'').trim();
     if(!/^\d{4}-\d{2}-\d{2}$/.test(date)){ this.setState({instMsg:'Pick a date first.', instOk:false}); return; }
     this.setState({instPushing:true, instMsg:'', instOk:false});
-    fetch('/api/hubspot-install-date',{method:'POST',headers:{'Content-Type':'application/json'},
+    fetch('/.netlify/functions/hubspot-install-date',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({dealId:String(r.hsId), date})})
       .then(res=>res.text().then(t=>{
         let d=null; try{ d=JSON.parse(t); }catch(e){}
@@ -969,7 +969,7 @@ class Component extends DCLogic {
     const body='<p><b>Delivery update</b>'+(who?' — '+who:'')+' · '+new Date().toLocaleString()+'</p><p>'+
       text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')+'</p>';
     this.setState({notePushing:true, noteMsg:'', noteOk:false});
-    fetch('/api/hubspot-note',{method:'POST',headers:{'Content-Type':'application/json'},
+    fetch('/.netlify/functions/hubspot-note',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({dealId:String(r.hsId), body, projectName:r.name||''})})
       .then(res=>res.text().then(t=>{
         let d=null; try{ d=JSON.parse(t); }catch(e){}
@@ -992,7 +992,7 @@ class Component extends DCLogic {
   loadRevenue(){
     if(this.state.hsRevLoading) return;
     this.setState({hsRevLoading:true, hsRevMsg:'Pulling deal revenue from HubSpot…'});
-    fetch('/api/revenue', {cache:'no-store'})
+    fetch('/.netlify/functions/revenue', {cache:'no-store'})
       .then(r=>r.ok?r.json():Promise.reject(new Error('HTTP '+r.status)))
       .then(j=>{
         if(j.error) throw new Error(j.error);

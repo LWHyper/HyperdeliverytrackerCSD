@@ -1,16 +1,14 @@
 /**
- * Hyper CSD — push the Carrier Installation Date from the dashboard into the HubSpot deal.
- * POST /api/hubspot-install-date   { dealId, date: "YYYY-MM-DD" }
- *   → { ok:true, property, url }
+ * Hyper CSD: push the Carrier Installation Date from the dashboard into the HubSpot deal.
+ * POST /.netlify/functions/hubspot-install-date   { dealId, date: "YYYY-MM-DD" }
+ *   -> { ok:true, property, url }
+ * Admin / connectivity only.
  *
  * The internal property name is resolved from the deal property schema by label
- * ("Carrier Installation Date" / "Carrier Install Date"), so it keeps working
- * even if the internal name differs. Override with HS_INSTALL_PROP if needed.
- *
+ * ("Carrier Installation Date" / "Carrier Install Date"). Override with HS_INSTALL_PROP.
  * Requires the service key to have: crm.objects.deals.write (+ crm.schemas.deals.read)
  */
-
-import { requireUser } from '../lib/auth.mjs';
+import { requireUser, json } from '../lib/auth.mjs';
 
 const TOKEN = process.env.HUBSPOT_TOKEN;
 const PORTAL = process.env.HS_PORTAL_ID || '47345387';
@@ -37,19 +35,18 @@ async function resolveProp() {
   return cachedProp;
 }
 
-export default async (req, context) => {
-  const headers = { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' };
-  const auth = await requireUser(req, context, { edit: true });
-  if (auth.error) return auth.error;
-  if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'POST only' }), { status: 405, headers });
-  if (!TOKEN) return new Response(JSON.stringify({ error: 'HUBSPOT_TOKEN not set on this Netlify project' }), { status: 500, headers });
+export const handler = async (event, context) => {
+  const auth = requireUser(event, context, { edit: true });
+  if (auth.response) return auth.response;
+  if (event.httpMethod !== 'POST') return json(405, { error: 'POST only' });
+  if (!TOKEN) return json(500, { error: 'HUBSPOT_TOKEN not set on this Netlify project' });
 
   let payload = {};
-  try { payload = await req.json(); } catch (e) {}
+  try { payload = JSON.parse(event.body || '{}'); } catch (e) {}
   const dealId = String(payload.dealId || '').trim();
   const date = String(payload.date || '').trim();
-  if (!dealId) return new Response(JSON.stringify({ error: 'dealId required' }), { status: 400, headers });
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return new Response(JSON.stringify({ error: 'Pick a date first (YYYY-MM-DD)' }), { status: 400, headers });
+  if (!dealId) return json(400, { error: 'dealId required' });
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return json(400, { error: 'Pick a date first (YYYY-MM-DD)' });
 
   try {
     const property = await resolveProp();
@@ -61,20 +58,14 @@ export default async (req, context) => {
     const text = await res.text();
     if (!res.ok) {
       const scope = res.status === 403 || /scope|permission/i.test(text);
-      return new Response(JSON.stringify({
+      return json(502, {
         error: scope
-          ? 'HubSpot refused the write — add crm.objects.deals.write to the service key, then redeploy.'
+          ? 'HubSpot refused the write. Add crm.objects.deals.write to the service key, then redeploy.'
           : `HubSpot ${res.status}: ${text.slice(0, 300)}`,
-      }), { status: 502, headers });
+      });
     }
-    return new Response(JSON.stringify({
-      ok: true,
-      property,
-      url: `https://app.hubspot.com/contacts/${PORTAL}/record/0-3/${dealId}/`,
-    }), { headers });
+    return json(200, { ok: true, property, url: `https://app.hubspot.com/contacts/${PORTAL}/record/0-3/${dealId}/` });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e.message || e) }), { status: 502, headers });
+    return json(502, { error: String(e.message || e) });
   }
 };
-
-export const config = { path: '/api/hubspot-install-date' };
