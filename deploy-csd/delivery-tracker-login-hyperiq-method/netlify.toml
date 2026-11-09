@@ -1,0 +1,38 @@
+[build]
+  publish = "."
+  command = ""
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/.netlify/functions/*"
+  [headers.values]
+    Cache-Control = "no-store"
+
+# The order books are served only through /.netlify/functions/data (login required).
+# Block every direct download of the raw data and the server source.
+[[redirects]]
+  from = "/data/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/netlify/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/package.json"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/SETUP-LOGINS.md"
+  to = "/404.html"
+  status = 404
+  force = true
