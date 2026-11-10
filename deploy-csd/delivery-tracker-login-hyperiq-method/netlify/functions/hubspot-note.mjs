@@ -1,5 +1,5 @@
 /**
- * Hyper CSD: push a dashboard note into the HubSpot deal timeline.
+ * Hyper CDS: push a dashboard note into the HubSpot deal timeline.
  * POST /.netlify/functions/hubspot-note   { dealId, body, projectName }
  *   -> { ok:true, noteId, url }
  * Admin / connectivity only. Every note is stamped with the signed in user.
@@ -26,7 +26,7 @@ export const handler = async (event, context) => {
 
   const who = String(auth.user.name || auth.user.email || '').replace(/[<>&]/g, '');
   const body = who && !auth.bypassed
-    ? typed + '<p style="color:#888">Pushed from the CSD Delivery Tracker by ' + who + '</p>'
+    ? typed + '<p style="color:#888">Pushed from the CDS Delivery Tracker by ' + who + '</p>'
     : typed;
 
   try {
