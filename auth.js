@@ -85,7 +85,7 @@
     gate.innerHTML =
       '<div style="background:#fff;border-radius:12px;max-width:380px;width:100%;padding:32px 28px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.35);">' +
         '<div style="width:46px;height:46px;margin:0 auto 14px;background:#8DC63F;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:16px;color:#15171C;">HN</div>' +
-        '<div style="font-weight:800;font-size:12px;letter-spacing:2px;color:#5B8C1F;">CSD · HYPER VIEW</div>' +
+        '<div style="font-weight:800;font-size:12px;letter-spacing:2px;color:#5B8C1F;">CDS · HYPER VIEW</div>' +
         '<div style="font-weight:800;font-size:20px;color:#1A1D23;margin-top:6px;">Delivery Tracker Dashboard</div>' +
         '<div id="hn-gate-msg" style="font-size:13px;color:#5A6472;margin-top:10px;line-height:1.5;">Staff sign in. Use your Hyper Networks email.</div>' +
         '<button id="hn-gate-btn" type="button" style="margin-top:20px;width:100%;min-height:44px;background:#15171C;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;">Sign in</button>' +
