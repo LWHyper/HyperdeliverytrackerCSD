@@ -1,4 +1,4 @@
-/* CSD Delivery Tracker auth gate (Netlify Identity). Same design as HyperIQ's
+/* CDS Delivery Tracker auth gate (Netlify Identity). Same design as HyperIQ's
  * src/auth.standalone.js.
  *
  * Two jobs:
